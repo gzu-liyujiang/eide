@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+    license wtfpl 2.0
+
+    by aenu 2018/10/22  
+       email:202983447@qq.com
+
+-->
+
+<view
+    xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent"
+	android:layout_height="fill_parent"
+    class="aenu.eide.view.TermView"
+	android:id="@+id/term"/>
+

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+    license wtfpl 2.0
+
+    by aenu 2018/10/22  
+       email:202983447@qq.com
+    
+-->
+	
+<LinearLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="match_parent"
+	android:layout_height="wrap_content"
+	android:minHeight="24dip"
+	android:orientation="horizontal"
+	android:paddingRight="1dip"
+	android:paddingLeft="1dip"
+	android:paddingTop="1dip"
+	android:paddingBottom="1dip"
+	android:gravity="center_vertical">
+
+	<ImageView
+		android:id="@android:id/icon"
+		android:layout_width="24dip"
+		android:layout_height="24dip"
+		android:layout_marginLeft="2dip"
+		android:layout_marginRight="1dip"
+		android:layout_gravity="center_vertical"
+		android:layout_centerInParent="true"
+		android:layout_alignParentLeft="true"/>
+
+	<TwoLineListItem
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:minHeight="20dip"
+		android:mode="twoLine">
+
+		<TextView
+			android:id="@android:id/text1"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="2dip"
+            android:textStyle="bold"
+			android:textAppearance="?android:attr/textAppearanceSmall"/>
+
+		<TextView
+			android:id="@android:id/text2"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_below="@android:id/text1"
+			android:textAppearance="?android:attr/textAppearanceSmall"/>
+
+	</TwoLineListItem>
+
+</LinearLayout>
+

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="FreeScrollingTextField_Dark">
+        <item name="fstf_TextColor">@android:color/white</item>
+        <item name="fstf_TextColorSelection">@android:color/white</item>
+        <item name="fstf_BackgroundSelection">#808080</item>    
+        <item name="fstf_TextSize">16dip</item>
+        <item name="fstf_TextColorKeyword">#00ffff</item>          
+        <item name="fstf_TextColorString">#ff00ff</item>          
+        <item name="fstf_TextColorComment">#009900</item>     
+        <item name="fstf_TextColorLineNumber">#808080</item>
+    </style>
+
+    <style name="FreeScrollingTextField_Light">
+        <item name="fstf_TextColor">@android:color/black</item>
+        <item name="fstf_TextColorSelection">@android:color/white</item>
+        <item name="fstf_BackgroundSelection">#808080</item>    
+        <item name="fstf_TextSize">16dip</item>
+        <item name="fstf_TextColorKeyword">#0000ff</item>          
+        <item name="fstf_TextColorString">#ff0000</item>          
+        <item name="fstf_TextColorComment">#009900</item>              
+        <item name="fstf_TextColorLineNumber">#808080</item>      
+    </style>
+
+</resources>

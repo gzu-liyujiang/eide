@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <declare-styleable name="FreeScrollingTextField">
+        <attr name="fstf_TextColor" format="reference|color"/>
+        <attr name="fstf_TextSize" format="dimension"/>
+        <attr name="fstf_TextColorSelection" format="reference|color"/>
+        <attr name="fstf_BackgroundSelection" format="reference|color"/> 
+        <attr name="fstf_TextColorKeyword" format="reference|color"/> 
+        <attr name="fstf_TextColorString" format="reference|color"/> 
+        <attr name="fstf_TextColorComment" format="reference|color"/> 
+        <attr name="fstf_TextColorLineNumber" format="reference|color"/> 
+
+    </declare-styleable>
+
+</resources>

@@ -1,0 +1,96 @@
+package aenu.eide.PL;
+import com.myopicmobile.textwarrior.android.ICodeDiag;
+import java.util.List;
+import com.myopicmobile.textwarrior.common.Pair;
+import java.util.ArrayList;
+import org.eclipse.jdt.internal.compiler.env.ICompilationUnit;
+import org.eclipse.jdt.internal.compiler.CompilationResult;
+import org.eclipse.jdt.internal.compiler.batch.CompilationUnit;
+import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
+import org.eclipse.jdt.core.compiler.CategorizedProblem;
+
+public class JavaCodeDiag implements ICodeDiag
+{
+    private DiagThread diag_thread;   
+    
+    @Override
+    public void cancel_diag(){
+        if(diag_thread!=null){
+            diag_thread.interrupt();
+            diag_thread=null;
+        }
+    }
+
+    @Override
+    public void diag(String code, ICodeDiag.DiagCallback dc){
+        if(diag_thread!=null){
+            diag_thread.interrupt();
+            diag_thread=null;
+        }
+
+        diag_thread=new DiagThread(this,code,dc);
+        diag_thread.start();
+    }
+
+    static private class DiagThread extends Thread{
+
+        private ICodeDiag.DiagCallback callback;
+        private JavaCodeDiag code_diag;
+        private String source;
+        
+        private DiagThread(JavaCodeDiag cd,String source,ICodeDiag.DiagCallback dc){
+            this.source=source;
+            callback=dc;
+            code_diag=cd;
+        }
+
+        @Override
+        public void run(){
+            final List<Pair> errors = new ArrayList<>();
+            final List<Pair> warnings = new ArrayList<>();
+            final List<String> errorTexts = new ArrayList<>();
+            final List<String> warningTexts = new ArrayList<>();       
+            
+            try{
+                ICompilationUnit uint=new CompilationUnit(source.toCharArray(),"","utf-8");
+                CompilationResult result=new CompilationResult(uint,0,1,100);
+                CompilationUnitDeclaration decl=JavaAutoCompletePanel._parser.parse(uint,result);       
+                JavaAutoCompletePanel._parser.getMethodBodies(decl);
+        
+                if(decl.scope!=null)
+                    decl.scope.faultInTypes();
+                //if(decl.scope!=null)
+                //    decl.scope.verifyMethods();
+                    
+                decl.resolve();
+                decl.analyseCode();
+                decl.generateCode();
+                
+                if(decl.scope != null)
+                    decl.scope.storeDependencyInfo();
+                
+                decl.finalizeProblems();
+                
+                CategorizedProblem[] problems=result.getAllProblems();
+                
+                if(problems!=null)
+                  for(CategorizedProblem p:problems){
+                    if(p.isWarning()){
+                        warnings.add(new Pair(p.getSourceStart(),p.getSourceEnd()));
+                        warningTexts.add(p.getMessage());
+                    }
+                    else if(p.isError()){
+                        errors.add(new Pair(p.getSourceStart(),p.getSourceEnd()));
+                        errorTexts.add(p.getMessage());
+                    }                    
+                  }
+                
+            }
+            catch(Exception e){}
+            finally{
+                callback.onWarning(warnings,warningTexts);
+                callback.onError(errors,errorTexts);
+            }
+        }
+    }
+}

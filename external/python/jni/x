@@ -1,0 +1,14 @@
+$(python_DIR)/Modules/_blake2/blake2b_impl.c \
+  $(python_DIR)/Modules/_blake2/blake2s_impl.c \
+  $(python_DIR)/Modules/_blake2/blake2module.c \
+  $(python_DIR)/Modules/_blake2/impl/blake2b-ref.c \
+  $(python_DIR)/Modules/_blake2/impl/blake2b.c \
+  $(python_DIR)/Modules/_blake2/impl/blake2s-ref.c \
+  $(python_DIR)/Modules/_blake2/impl/blake2s.c \
+
+ $(python_DIR)/Modules/_sha3/sha3module.c \
+  $(python_DIR)/Modules/_sha3/kcp/KeccakHash.c \
+  $(python_DIR)/Modules/_sha3/kcp/KeccakP-1600-inplace32BI.c \
+  $(python_DIR)/Modules/_sha3/kcp/KeccakP-1600-opt64.c \
+  $(python_DIR)/Modules/_sha3/kcp/KeccakSponge.c \
+

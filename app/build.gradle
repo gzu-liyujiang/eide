@@ -1,0 +1,30 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 21
+    buildToolsVersion "21.1.0"
+
+    defaultConfig {
+        applicationId "aenu.eide"
+        minSdkVersion 16
+        targetSdkVersion 21
+        versionCode 1
+        versionName "0.1"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+	compile 'com.android.support:support-v4:13.0.0'
+    compile project(':textwarrior')
+    compile project(':eclipse')
+    compile project(':AndroidTreeView')
+    compile project(':emulatorview')
+    compile project(':libtermexec')
+    compile project(':eide-gradle')
+}

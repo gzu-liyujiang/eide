@@ -1,0 +1,10 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item 
+        android:id="@+id/menu_compile" 
+        android:icon="@drawable/ic_l_play_light" 
+        android:showAsAction="ifRoom" />
+    <group>
+        <item android:id="@+id/menu_file_browser" android:title="文件浏览"/>
+        <item android:id="@+id/menu_open_term" android:title="打开终端"/>
+    </group>
+</menu>

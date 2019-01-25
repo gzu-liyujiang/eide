@@ -1,0 +1,84 @@
+package aenu.eide.PL;
+import com.myopicmobile.textwarrior.android.ICodeDiag;
+import com.myopicmobile.textwarrior.android.ICodeDiag.DiagCallback;
+import java.util.List;
+import com.myopicmobile.textwarrior.common.Pair;
+import java.util.ArrayList;
+
+public class CxxCodeDiag implements ICodeDiag
+{
+    private DiagThread diag_thread;   
+    private String  source_file_path;
+    private String[]  cx_flags;
+
+    static {
+        System.loadLibrary("cxxdiag");
+    }
+
+    public CxxCodeDiag(String sfp,String[] flags){
+        source_file_path=sfp;
+        cx_flags=flags;
+    }
+
+    @Override
+    public void cancel_diag(){
+        if(diag_thread!=null){
+            diag_thread.interrupt();
+            diag_thread=null;
+        }
+    }
+
+    @Override
+    public void diag(String code, ICodeDiag.DiagCallback dc){
+        if(diag_thread!=null){
+            diag_thread.interrupt();
+            diag_thread=null;
+        }
+
+        diag_thread=new DiagThread(this,code,dc);
+        diag_thread.start();
+    }
+
+    static private class DiagThread extends Thread{
+
+        private ICodeDiag.DiagCallback callback;
+        private CxxCodeDiag code_diag;
+        private String source;
+        private List<Pair> errors = new ArrayList<>();
+        private List<Pair> warnings = new ArrayList<>();
+        private List<String> errorTexts = new ArrayList<>();
+        private List<String> warningTexts = new ArrayList<>();
+        
+        private DiagThread(CxxCodeDiag cd,String source,ICodeDiag.DiagCallback dc){
+            this.source=source;
+            callback=dc;
+            code_diag=cd;
+        }
+
+        @Override
+        public void run(){
+            try{
+                native_diag(source,code_diag.source_file_path,code_diag.cx_flags);
+            }
+            finally{
+                callback.onWarning(warnings,warningTexts);
+                callback.onError(errors,errorTexts);
+            }
+        }
+
+        private native void native_diag(String source,String filepath,String[] flags);
+
+        private void nc_add_warning(int s,int e,String text){
+            warnings.add(new Pair(s,e));
+            warningTexts.add(text);
+        }
+
+        private void nc_add_error(int s,int e,String text){
+            errors.add(new Pair(s,e));
+            errorTexts.add(text);
+        }
+    }
+   
+    
+    
+}

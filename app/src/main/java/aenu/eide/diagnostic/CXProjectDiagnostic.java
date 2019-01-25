@@ -1,0 +1,142 @@
+
+//license wtfpl 2.0
+
+//by aenu 2019
+//   email:202983447@qq.com
+
+package aenu.eide.diagnostic;
+import aenu.eide.gradle_impl.GradleProject;
+import java.io.File;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
+import android.util.Log;
+import aenu.eide.PL.CxxLanguage;
+
+public final class CXProjectDiagnostic extends ProjectDiagnostic{
+    
+    static {
+        System.loadLibrary("cx-diag");
+    }
+    
+    private final GradleProject project;
+    private final DiagnosticCallback callback;
+    
+    public CXProjectDiagnostic(GradleProject project,DiagnosticCallback cb){
+        this.project=project;
+        this.callback=cb;
+        start();
+    }
+    
+    private void start(){     
+        
+        new Thread(){
+            public void run(){
+                final File dir=new File(project.build_gradle.getParentFile(),
+                "src/main/jni");
+
+                final List<File> files=loadCXFiles(dir);
+                
+                callback.onDiagStart();
+            
+                /*final ExecutorService eServer=Executors.newFixedThreadPool(4);
+            
+                for(File file:files)
+                    eServer.execute(new CXDiagsticThread(CXProjectDiagnostic.this,file));
+
+                eServer.shutdown();
+                
+                while(!eServer.isTerminated());*/
+                
+                for(File file:files){
+                    Log.i("eide",file.toString());
+                    new CXDiagsticThread(CXProjectDiagnostic.this,file).run();
+                   
+                }
+                
+                callback.onDiagDone();
+            }
+        }.start();
+        
+    }
+    
+    private List<File> loadCXFiles(File dir){
+        final List<File> list=new ArrayList<>();
+        final File[] files=dir.listFiles();
+
+        if(files!=null)
+            for(File file:files){
+                if(file.isFile()){
+                    String file_name=file.getName();
+                    if(file_name.endsWith(".c")
+                    ||file_name.endsWith(".cpp")
+                    ||file_name.endsWith(".cxx")
+                    ||file_name.endsWith(".cc"))
+                        list.add(file);
+                }
+                else{
+                    list.addAll(loadCXFiles(file));
+                }
+            }
+
+        return list;
+    }
+    
+    public void updateDiagstic(File file,String unsaved_source){
+        errors.remove(file);
+        warnings.remove(file);
+        
+    }
+    
+    private final static class CXDiagsticThread implements Runnable{
+        
+        final CXProjectDiagnostic __ProjectDiagstic;
+        final File __File;
+        
+        private CXDiagsticThread(CXProjectDiagnostic projectD,File file){
+            __ProjectDiagstic=projectD;
+            __File=file;
+        }
+        
+        @Override
+        public void run(){
+            String[] flags=__File.getName().endsWith(".c")
+                    ?CxxLanguage.defaultCFlag():CxxLanguage.defaultCppFlag();
+            native_diag_from_file(__File.getAbsolutePath(),flags);
+        }
+        
+        private native void native_diag_from_file(String file_path,String[] cmds);
+        
+        private void nc_add_error(String filepath,int startP,int endP,int line,int column,String msg){
+            final File file=new File(filepath);
+            final DiagnosticInfo error=DiagnosticInfo.newError(startP,endP,line,column,msg);
+            List<DiagnosticInfo> errors=__ProjectDiagstic.errors.get(file);
+            if(errors==null){
+                errors=new ArrayList<>();
+                __ProjectDiagstic.errors.put(file,errors);
+            }
+            Log.w("eide","E:"+file.toString()+":"+error.info);
+            
+            if(!errors.contains(error))
+                errors.add(error);
+        }
+        
+        private void nc_add_warning(String filepath,int startP,int endP,int line,int column,String msg){
+            final File file=new File(filepath);
+            final DiagnosticInfo warning=DiagnosticInfo.newWarning(startP,endP,line,column,msg);
+            List<DiagnosticInfo> warnings=__ProjectDiagstic.warnings.get(file);
+            if(warnings==null){
+                warnings=new ArrayList<>();
+                __ProjectDiagstic.errors.put(file,warnings);
+            }
+            Log.w("eide","W:"+file.toString()+":"+warning.info);
+            
+            if(!warnings.contains(warning))
+                warnings.add(warning);
+        }
+    }
+}
