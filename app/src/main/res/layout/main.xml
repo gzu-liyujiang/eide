@@ -1,38 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:orientation="vertical">
 
-<!--
-license wtfpl 2.0
-by aenu 2018/10/22  
-email:202983447@qq.com
--->
+	<android.support.v7.widget.Toolbar
+		android:id="@+id/toolbar"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:background="#ffffff"
+		android:minHeight="?attr/actionBarSize"/>
 
-<FrameLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
+	<android.support.v4.widget.DrawerLayout
+		android:id="@+id/drawer"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent">
 
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:id="@+id/code_edit_container"/>
+		<FrameLayout
+			android:layout_width="match_parent"
+			android:layout_height="match_parent"
+			android:id="@+id/code_edit_container"/>
 
-    <RelativeLayout
-        android:layout_height="match_parent"
-        android:layout_width="match_parent">
+		<android.support.v4.view.ViewPager
+			android:layout_gravity="left"
+            android:id="@+id/project_pager"
+            
+			android:layout_width="match_parent"
+			android:layout_height="match_parent">
 
-        <FrameLayout
-            android:layout_height="match_parent"
-            android:layout_width="match_parent"
-            android:id="@+id/file_browser"
-            android:layout_alignParentRight="true"
-            android:layout_alignParentTop="true"/>
-        <FrameLayout
-            android:layout_height="match_parent"
-            android:layout_width="match_parent"
-            android:id="@+id/project_tree"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentTop="true"/>
+			<android.support.v4.view.PagerTabStrip
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"/>
 
-    </RelativeLayout>
+		</android.support.v4.view.ViewPager>
+       
+	</android.support.v4.widget.DrawerLayout>
 
-</FrameLayout>
+</LinearLayout>
+

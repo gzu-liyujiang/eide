@@ -8,10 +8,24 @@
 
 -->
 
-<view
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-	android:layout_width="fill_parent"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#ffffff"
+        android:minHeight="?attr/actionBarSize"/>
+    
+<view
+    android:layout_width="fill_parent"
 	android:layout_height="fill_parent"
     class="aenu.eide.view.TermView"
 	android:id="@+id/term"/>
+
+</LinearLayout>
 

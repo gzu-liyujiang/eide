@@ -66,16 +66,16 @@ public class Project extends Fragment
     
     @Override
     public View onCreateView(LayoutInflater inflater,ViewGroup container,Bundle savedInstanceState){
-        return inflater.inflate(R.layout.fragment_project, container, false);
+        return inflater.inflate(R.layout.file, container, false);
     }  
   
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState){
         super.onViewCreated(view, savedInstanceState);
-        project_pager = (ViewPager)view.findViewById(R.id.project_pager);
+        project_pager = null;/*(ViewPager)view.findViewById(R.id.project_pager);
 
         ((PagerTabStrip)(view.findViewById(R.id.project_tab)))
-            .setTextSpacing(50);
+            .setTextSpacing(50);*/
             
         final ProjectAdapter adapter = new ProjectAdapter(getActivity(),project_dir,listener);
         
@@ -197,8 +197,8 @@ public class Project extends Fragment
         public void onClick(TreeNode node,Object value){
             File f=(File) value;
             if(f.isFile())
-                if(listener!=null)
-                    listener.onRequest(E_MainActivity.REQUEST_OPEN_FILE,f);
+                if(listener!=null);
+                 //   listener.onRequest(E_MainActivity.REQUEST_OPEN_FILE,f);
         }
         
         @Override

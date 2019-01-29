@@ -5,20 +5,26 @@
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     
     <application
+        android:theme="@style/AppTheme"
+    
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
-        android:label="@string/app_name"
-        android:theme="@style/AppTheme"
+        android:label="@string/app_name"  
         android:name="aenu.eide.E_Application">
         <activity
-            android:name="aenu.eide.E_MainActivity"
+              android:name="aenu.eide.E_MainActivity"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            
         </activity>
+        <activity
+            android:name="aenu.eide.E_FileActivity"
+            android:launchMode="singleTask"/>
+        
         <activity
             android:name="aenu.eide.E_TermActivity"
             android:launchMode="singleTask"

@@ -132,7 +132,7 @@ public final class E_Installer
     }
     
     
-    static void install_ndk(final Activity activity){
+    static void install_ndk(final Activity activity,final URL url){
         
         final ProgressDialog pd = ProgressDialog.show(activity, null, "ndk install ...", true, false);
         
@@ -148,7 +148,7 @@ public final class E_Installer
         new Thread(){
             public void run(){         
                 try{                
-                    InputStream in=activity.getAssets().open("n.tar.xz");
+                    InputStream in=url.openStream();
                     byte[] buf=new byte[4096*4];
                     int n;
                     

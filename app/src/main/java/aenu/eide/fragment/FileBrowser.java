@@ -78,10 +78,11 @@ public class FileBrowser extends ListFragment
         }
         
         if(listener!=null){
-            if(f.getName().equals("build.gradle"))
-                listener.onRequest(E_MainActivity.REQUEST_OPEN_PROJECT,f.getParentFile());
+            if(f.getName().equals("build.gradle"));
+               // listener.onRequest(E_MainActivity.REQUEST_OPEN_PROJECT,f.getParentFile());
            // else
-                listener.onRequest(E_MainActivity.REQUEST_OPEN_FILE,f);}
+            //    listener.onRequest(E_MainActivity.REQUEST_OPEN_FILE,f);
+            }
     }    
     
     private void changeDir(File newDir){

@@ -20,7 +20,8 @@ android {
 }
 
 dependencies {
-	compile 'com.android.support:support-v4:13.0.0'
+	compile 'com.android.support:support-v4:25.0.0'
+    compile 'com.android.support:appcompat-v7:25.0.0'
     compile project(':textwarrior')
     compile project(':eclipse')
     compile project(':AndroidTreeView')

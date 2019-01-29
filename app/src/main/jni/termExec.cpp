@@ -76,12 +76,23 @@ static void android_os_Exec_setPtyUTF8Mode(JNIEnv *env, jobject clazz, jint fd, 
         env->ThrowNew(env->FindClass("java/io/IOException"), "Failed to set terminal UTF-8 mode");
 }
 
+static jstring android_os_Exec_getPtyPath(JNIEnv *env, jobject clazz, jint fd)
+{
+    char* path;
+    if (!(path=ptsname(fd)))
+        env->ThrowNew(env->FindClass("java/io/IOException"), "Failed , no find pty");
+    return env->NewStringUTF(path);
+}
+
 static const char *classPathName = "aenu/eide/E_TermSession";
 static JNINativeMethod method_table[] = {
     { "setPtyWindowSizeInternal", "(IIIII)V",
         (void*) android_os_Exec_setPtyWindowSize},
     { "setPtyUTF8ModeInternal", "(IZ)V",
-        (void*) android_os_Exec_setPtyUTF8Mode}
+        (void*) android_os_Exec_setPtyUTF8Mode},
+    { "getPtyPathInternal", "(I)Ljava/lang/String;",
+        (void*) android_os_Exec_getPtyPath}
+
 };
 
 /*

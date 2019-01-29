@@ -19,8 +19,10 @@ import android.view.inputmethod.InputMethodManager;
 import android.content.Context;
 import dalvik.system.DexClassLoader;
 import java.io.File;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 
-public class E_TermActivity extends Activity{
+public class E_TermActivity extends AppCompatActivity{
     
     /*public static final String ACTION_TERM_EXEC="eide.intent.action.TERM_EXEC";
     public static final String EXTRA_COMMAND="extra.command";*/
@@ -34,7 +36,7 @@ public class E_TermActivity extends Activity{
     
     private TermView term_view;
     private Intent intent;
-    
+    private E_TermSession session=null;
     @Override
     protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
@@ -44,39 +46,34 @@ public class E_TermActivity extends Activity{
         DisplayMetrics dm=new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(dm);
         term_view.setDensity(dm);
-        
+               
         try{
-            /*
-            final String action=getAction();  
-            String command=null;
-            if(action!=null&&action.equals(ACTION_TERM_EXEC))
-                command=getIntent().getStringExtra(EXTRA_COMMAND);
-                
-            term_view.attachSession(new E_TermSession(command,false));*/
             String action=getAction();
             if(action!=null&&action.equals(ACTION_JAVA_TERM_EXEC)){
                 DexClassLoader DCL=getDCL(getIntent().getStringExtra(EXTRA_BIN));
                 Class<?> main_class=DCL.loadClass(getIntent().getStringExtra(EXTRA_JAVA_MAIN_CLASS));
                 String[] args=getIntent().getStringArrayExtra(EXTRA_ARGS);
 
-                term_view.attachSession(new E_JavaTermSession(DCL,main_class,args));
+                session=new E_TermSession(main_class,args);
             }
             else if(action!=null&&action.equals(ACTION_TERM_EXEC)){
-                E_TermSession TS=  new E_TermSession(getIntent().getStringExtra(EXTRA_BIN),false);
-                
-                term_view.attachSession(TS);
-
+                session=new E_TermSession(getIntent().getStringExtra(EXTRA_BIN),false);
             }
             else{
-                term_view.attachSession(new E_TermSession(null,false));
+                session=new E_TermSession(null,false);
             }
             
         }catch (Exception e) {
             throw new RuntimeException(e);
         }
         
-        intent=new Intent(this,E_TermService.class);
+        setSupportActionBar((Toolbar)findViewById(R.id.toolbar));
         
+        intent=new Intent(this,E_TermService.class);     
+        
+        term_view.attachSession(session);
+        getSupportActionBar().setDisplayShowTitleEnabled(true);
+        getSupportActionBar().setTitle(session.getTitle());
         startService(intent);
     }
     
@@ -91,6 +88,12 @@ public class E_TermActivity extends Activity{
         File dex_OD=new File(E_Application.getTmpDir(),Long.toString(System.currentTimeMillis()));
         dex_OD.mkdir();
         return new DexClassLoader(jar_path,dex_OD.getAbsolutePath(),null,getClassLoader());
+    }
+
+    @Override
+    public void finish(){
+        session.finish();
+        super.finish();
     }
     
     @Override

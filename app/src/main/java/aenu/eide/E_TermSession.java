@@ -30,6 +30,10 @@ import jackpal.androidterm.emulatorview.ColorScheme;
 import jackpal.androidterm.emulatorview.TermSession;
 import jackpal.androidterm.emulatorview.UpdateCallback;
 import jackpal.androidterm.TermExec;
+import dalvik.system.DexClassLoader;
+import aenu.eide.util.OSUtils;
+import java.lang.reflect.Method;
+import android.os.Looper;
 
 //import jackpal.androidterm.compat.FileCompat;
 //import jackpal.androidterm.util.TermSettings;
@@ -39,6 +43,12 @@ import jackpal.androidterm.TermExec;
  * and the I/O streams used to talk to the process.
  */
 class E_TermSession extends TermSession {
+    
+    public static final enum TermType{
+        DEFAULT,
+        JAVA
+    };
+    
     //** Set to true to force into 80 x 24 for testing with vttest. */
     private static final boolean VTTEST_MODE = false;
 
@@ -83,19 +93,26 @@ class E_TermSession extends TermSession {
 
     private Thread mWatcherThread;
     
-    private String mInitialCommand;
+    private String dInitialCommand;
 
+    private Class<?> jMainClass;  
+    
+    private final TermType mTermType;
+    
     public E_TermSession(String initCommand,boolean exitOnEOF) throws IOException {
         super(exitOnEOF);
         
-        this.mInitialCommand=initCommand;
-
+        this.mTermType=TermType.DEFAULT;
+        
+        this.dInitialCommand=initCommand;
+        
         this.mTermFd = ParcelFileDescriptor.open(new File("/dev/ptmx"), ParcelFileDescriptor.MODE_READ_WRITE);
 
         this.createdAt = System.currentTimeMillis();
 
         //updatePrefs(settings);
         setDefaultUTF8Mode(true);
+        setTitle(getPtyPathInternal(mTermFd.getFd()));
         
         String argc="/system/bin/sh";
         String args[]={"-"};
@@ -127,6 +144,44 @@ class E_TermSession extends TermSession {
         
     }
     
+    public E_TermSession(Class<?> mainClass,String[] args) throws IOException {
+        super(false);
+
+        this.mTermType=TermType.JAVA;
+        this.jMainClass=mainClass;
+        
+        this.mTermFd = ParcelFileDescriptor.open(new File("/dev/ptmx"), ParcelFileDescriptor.MODE_READ_WRITE);
+
+        this.createdAt = System.currentTimeMillis();
+
+        //updatePrefs(settings);
+        setDefaultUTF8Mode(true);
+        setTitle(getPtyPathInternal(mTermFd.getFd()));
+
+        setTermOut(new ParcelFileDescriptor.AutoCloseOutputStream(mTermFd));
+        setTermIn(new ParcelFileDescriptor.AutoCloseInputStream(mTermFd));
+
+        mWatcherThread = new Thread() {
+            @Override
+            public void run() {
+                //Log.i(TermDebug.LOG_TAG, "waiting for: " + mProcId);
+                //try{
+                //    int result = mProc.waitFor();               
+                //    mMsgHandler.sendMessage(mMsgHandler.obtainMessage(PROCESS_EXITED, result));            
+                //}catch (InterruptedException e) {    
+                //    //mWatcherThread.start();//FIXME
+                //}
+                int result = TermExec.waitFor(mProcId);
+                //Log.i(TermDebug.LOG_TAG, "Subprocess exited: " + result);
+                mMsgHandler.sendMessage(mMsgHandler.obtainMessage(PROCESS_EXITED, result));
+
+                //Log.i(TermDebug.LOG_TAG, "Subprocess exited: " + result);
+            }
+        };
+        mWatcherThread.setName("Process watcher");
+
+    }
+    
     /*
     public void updatePrefs(TermSettings settings) {
         mSettings = settings;
@@ -144,12 +199,44 @@ class E_TermSession extends TermSession {
 
         setPtyUTF8Mode(getUTF8Mode());
         setUTF8ModeUpdateCallback(mUTF8ModeNotify);
+        
+        switch(mTermType){
+            case DEFAULT:
+                defaultInitialize();
+                break;
+            case JAVA:
+                javaInitialize();
+                break;
+        }
+    }
+    
+    private void defaultInitialize(){
         mWatcherThread.start();
         
-        if(mInitialCommand!=null&&!mInitialCommand.isEmpty())
-            write(mInitialCommand+'\n');
+        if(dInitialCommand!=null&&!dInitialCommand.isEmpty())
+            write(dInitialCommand+'\n');
     }
 
+    private void javaInitialize(){
+        if((mProcId=OSUtils.fork())==0){
+            
+            System.setIn(getTermIn());
+            System.setOut(new PrintStream(getTermOut()));
+            System.setErr(new PrintStream(getTermOut()));         
+            try{           
+                final Method main=jMainClass.getMethod("main",String[].class);
+                main.invoke(jMainClass,null);
+            }catch(Exception e){
+                System.err.println(e.toString());
+            }finally{
+                System.exit(0);
+            }
+        }
+        else{                               
+            mWatcherThread.start();         
+        }        
+    }
+    
     @Override
     public void updateSize(int columns, int rows) {
         if (VTTEST_MODE) {
@@ -283,6 +370,7 @@ class E_TermSession extends TermSession {
     static native void setPtyWindowSizeInternal(int fd, int row, int col, int xpixel, int ypixel) throws IOException;
 
     static native void setPtyUTF8ModeInternal(int fd, boolean utf8Mode) throws IOException;
+    static native String getPtyPathInternal(int fd) throws IOException;
     
     /*
     private static void cacheDescField() throws NoSuchFieldException {

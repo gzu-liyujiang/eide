@@ -6,91 +6,72 @@
 
 package aenu.eide;
 
-import android.app.*;
-import android.os.*;
-
-import android.util.AttributeSet;
-import org.xmlpull.v1.XmlPullParser;
-import android.util.Xml;
-import android.content.res.Resources;
-import android.widget.Button;
-import android.view.Menu;
-import android.view.MenuItem;
-import aenu.eide.fragment.FileBrowser;
-import android.view.Display;
-import android.view.View;
-import android.widget.FrameLayout;
-import aenu.eide.view.JavaEditor;
-import android.widget.Toast;
-import android.view.View.OnClickListener;
-import android.view.Gravity;
-import aenu.eide.fragment.Project;
-import java.io.File;
-import android.view.ViewGroup;
-import aenu.eide.util.IOUtils;
-import java.io.IOException;
-import android.content.Intent;
-import java.util.Map;
-import com.myopicmobile.textwarrior.android.FreeScrollingTextField;
-import java.util.HashMap;
-import aenu.eide.view.CxxEditor;
-import aenu.eide.view.GradleEditor;
-import android.util.Log;
-import java.util.ArrayList;
-import java.util.List;
-import android.view.KeyEvent;
-import android.widget.ImageView;
-import android.widget.ImageButton;
-import aenu.eide.gradle_impl.GradleProject;
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.net.URL;
-import java.net.MalformedURLException;
 import aenu.eide.PL.CxxLanguage;
-import aenu.eide.view.XmlEditor;
-import aenu.eide.diagnostic.ProjectDiagnostic;
-import aenu.eide.diagnostic.CXProjectDiagnostic;
 import aenu.eide.diagnostic.DiagnosticCallback;
 import aenu.eide.diagnostic.DiagnosticInfo;
-import java.util.Set;
+import aenu.eide.diagnostic.ProjectDiagnostic;
+import aenu.eide.gradle_impl.GradleProject;
 import aenu.eide.view.CodeEditor;
+import aenu.eide.view.CxxEditor;
+import aenu.eide.view.GradleEditor;
+import aenu.eide.view.JavaEditor;
+import aenu.eide.view.ProjectPage;
+import aenu.eide.view.ProjectView;
+import aenu.eide.view.XmlEditor;
+import android.app.AlertDialog;
+import android.content.Intent;
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
+import android.util.Log;
+import android.view.Gravity;
+import android.view.KeyEvent;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Toast;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-public class E_MainActivity extends Activity implements RequestListener,DiagnosticCallback
+public class E_MainActivity extends AppCompatActivity implements RequestListener, DiagnosticCallback
 {
-    public final static int REQUEST_OPEN_FILE=0;
-    public final static int REQUEST_OPEN_PROJECT=1;
-   
-    private final int ID_project=0xaa123456;
+    public static final int REQUEST_OPEN_PROJECT=0x3584;
+    public static final int REQUEST_OPEN_FILE=0x3585;
     
-    private Fragment file_browser;
-    private Project project_tree;
+    public final int event_click_project_icon=0xaa123456;
+    public final int event_open_project=0xaa123457;
+    public final int event_open_file=0xaa123458;
+    
     private GradleProject mGradleProject;
     private ProjectDiagnostic mProjectDiagnostic;
+    private ProjectView project_view;
     
     private final Map<Class,CodeEditor> EDITOR=new HashMap<>();
     private final List<Fragment> backStack=new ArrayList<>();
-    
-    private final View.OnClickListener click_listener=new View.OnClickListener(){
-        @Override
-        public void onClick(View v){
-            on_click(v.getId());
-        }     
-    };
+    private DrawerLayout drawer;
+    private ViewPager pager;
     
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
+             
+        this.drawer= (DrawerLayout) findViewById(R.id.drawer);
+        this.pager=(ViewPager) findViewById(R.id.project_pager);
+        this.pager.setAdapter(new ProjectPage(this,null,null));
         
-        if(getWindowManager().getDefaultDisplay().getWidth()
-        <getWindowManager().getDefaultDisplay().getHeight())
-            initVerticalFragmentContainer();
-        else
-            initHorizonalFragmentContainer();
-
-        initAndHideFragment();
         initEditor();
         initActionBar();
         
@@ -99,7 +80,7 @@ public class E_MainActivity extends Activity implements RequestListener,Diagnost
             try{
                   E_Installer.install_toolchain(this);
                   E_Installer.install_template_and_key(this);
-                  E_Installer.install_ndk(this);
+                  //E_Installer.install_ndk(this,E_Application.getNdkUrl());
                   E_Application.updateConfigVersion(this);
             }
             catch (Exception e) {
@@ -107,26 +88,9 @@ public class E_MainActivity extends Activity implements RequestListener,Diagnost
                 throw new RuntimeException(e);
             }
         }
+        
     }
-    
-    private void initVerticalFragmentContainer(){
-        Display display=getWindowManager().getDefaultDisplay();
-        findViewById(R.id.file_browser).setPadding((int)(display.getWidth()*0.4f),10,10,10);
-        findViewById(R.id.project_tree).setPadding(10,10,(int)(display.getWidth()*0.4f),10);
-    }
-
-    private void initHorizonalFragmentContainer(){
-        Display display=getWindowManager().getDefaultDisplay();
-        findViewById(R.id.file_browser).setPadding((int)(display.getWidth()*0.6f),10,10,10);   
-        findViewById(R.id.project_tree).setPadding(10,10,(int)(display.getWidth()*0.6f),10);
-    }
-
-    private void initAndHideFragment(){
-        file_browser=new FileBrowser(this);
-        getFragmentManager().beginTransaction().add(R.id.file_browser,file_browser).detach(file_browser).commit();
-        project_tree=new Project(this);
-        getFragmentManager().beginTransaction().add(R.id.project_tree,project_tree).detach(project_tree).commit();     
-    }
+  
     
     private void initEditor(){
         EDITOR.put(JavaEditor.class,new JavaEditor(this,R.style.FreeScrollingTextField_Light));
@@ -136,87 +100,91 @@ public class E_MainActivity extends Activity implements RequestListener,Diagnost
     }
     
     private void initActionBar(){
-        getActionBar().setDisplayUseLogoEnabled(false);
-        getActionBar().setDisplayShowHomeEnabled(false);
-        getActionBar().setDisplayShowTitleEnabled(false);
-        getActionBar().setDisplayHomeAsUpEnabled(false);
-        getActionBar().setDisplayShowCustomEnabled(true);
-
-        final ImageView project=new ImageView(this);
-        project.setId(ID_project);
-        project.setImageResource(R.drawable.project_open);
-        project.setOnClickListener(click_listener);
-        project.setTag(R.drawable.project_open);
-        getActionBar().setCustomView(project,new ActionBar.LayoutParams(Gravity.LEFT));
-    }
-    
-    private void addFragmentOnUI(Fragment f){
-        getFragmentManager().beginTransaction().attach(f).commit();
-        backStack.add(f);
-    }
-
-    private void removeFragmentOnUI(Fragment f){
-        getFragmentManager().beginTransaction().detach(f).commit();
-        backStack.remove(f);
+        
+        Toolbar tBar= (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(tBar);
+        
+        tBar.setNavigationIcon(R.drawable.ic_p_show);
+        tBar.setTag(R.drawable.ic_p_show);
+        tBar.setNavigationOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View p1){   
+                on_event(event_click_project_icon);
+            }
+        });
+        
+        getSupportActionBar().setDisplayShowTitleEnabled(false);
     }
     
     private void swapProjectIcon(){
-        ImageView projectV=(ImageView)getActionBar().getCustomView();
-        int projectNewI=((int)projectV.getTag())^R.drawable.project_open^R.drawable.project_hide;
-        projectV.setImageResource(projectNewI);
-        projectV.setTag(projectNewI);                     
+        Toolbar tBar= (Toolbar) findViewById(R.id.toolbar);
+        int projectNewI=((int)tBar.getTag())^R.drawable.ic_p_show^R.drawable.ic_p_hide;
+        
+        tBar.setNavigationIcon(projectNewI);
+        tBar.setTag(projectNewI);                     
     }
     
-    private void on_click(int id){
+    
+    public void on_event(int id,Object... data){
         switch(id){
-            case ID_project:
-                if(project_tree.isDetached())
-                    addFragmentOnUI(project_tree);
+            case event_click_project_icon:
+                if(!drawer.isDrawerOpen(Gravity.LEFT))
+                drawer.openDrawer(Gravity.LEFT);
                 else
-                    removeFragmentOnUI(project_tree);
+                    drawer.closeDrawer(Gravity.LEFT);
+            
                 swapProjectIcon();          
                 break;
+               case event_open_project:
+            mGradleProject=GradleProject.open(this,new File(data[0]+"/build.gradle"));
+            
+            pager.setAdapter(new ProjectPage(this,new File((String)data[0]),this));
+            drawer.openDrawer(Gravity.LEFT);
+                   break;
             case R.id.menu_file_browser:  
             
-                if(file_browser.isDetached())
-                    addFragmentOnUI(file_browser);
-                else
-                    removeFragmentOnUI(file_browser);
-                break;
+              startActivityForResult(new Intent(this,E_FileActivity.class),REQUEST_OPEN_PROJECT);
+            
+            break;
             case R.id.menu_open_term:
                 startActivity(new Intent(this,E_TermActivity.class));
                 break;
+                
             case R.id.menu_compile:
                 if(mGradleProject!=null){
                     
-                    {
-                        CodeEditor editor=getCurrentEditor();
-                        try{
-                            if(editor!=null) editor.save();
-                        }catch (IOException e) {}
-                    }
+                   codeSave();
                     
-                   // ProgressDialog d=ProgressDialog.show(this,null,"编译中...",true,false);
-                    try{
+                   try{
                         mGradleProject.build(this);
                         Toast.makeText(this,"成功",1).show();                       
-                    }catch (Exception e) {
-                        ByteArrayOutputStream b=new ByteArrayOutputStream();
-                        PrintStream p=new PrintStream(b);
-                        e.printStackTrace(p);
-                        p.close();
+                    }catch (Exception e) {    
                         new AlertDialog.Builder(this)
                           .setTitle("编译失败")
-                          .setMessage(b.toString())
+                          .setMessage(e.toString())
                           .create()
                           .show();
                     }finally{
                       //  d.dismiss();
                     }
-                }
-                     
+                }break;
+            case R.id.menu_undo:
+                codeUndo();
+                break;
+            case R.id.menu_redo:
+                codeRedo();
+                break;
             default: break;
         }
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu){
+        if(mGradleProject==null)
+            menu.findItem(R.id.menu_compile).setEnabled(false);
+        else
+            menu.findItem(R.id.menu_compile).setEnabled(true);
+        return super.onPrepareOptionsMenu(menu);
     }
     
     @Override
@@ -227,19 +195,32 @@ public class E_MainActivity extends Activity implements RequestListener,Diagnost
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item){
-        on_click(item.getItemId());
+        on_event(item.getItemId());
         return true;
     }
 
     @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data){
+        if(resultCode==RESULT_OK){
+            switch(requestCode){
+                case REQUEST_OPEN_PROJECT:
+                    on_event(event_open_project,data.getData().getPath());
+                    break;
+            }
+        }
+        
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+    
+    @Override
     public boolean onKeyDown(int keyCode, KeyEvent event){
-        if(backStack.size()!=0){
+       /* if(backStack.size()!=0){
             Fragment f=backStack.get(backStack.size()-1);
             removeFragmentOnUI(f);
             if(f instanceof Project)
                 swapProjectIcon();
             return true;
-        }
+        }*/
         return super.onKeyDown(keyCode, event);
     }
     
@@ -262,6 +243,24 @@ public class E_MainActivity extends Activity implements RequestListener,Diagnost
             code_edit_container.removeViewAt(0);           
         code_edit_container.addView(editor);       
     }
+    
+    private void codeSave(){  
+        CodeEditor editor=getCurrentEditor();
+        try{
+            if(editor!=null) editor.save();
+        }catch (IOException e) {}     
+    }
+    
+    private void codeUndo(){
+        CodeEditor editor=getCurrentEditor();
+        if(editor!=null) editor.undo();     
+    }
+    
+    private void codeRedo(){
+        CodeEditor editor=getCurrentEditor();
+        if(editor!=null) editor.redo();  
+    }
+    
     
     private CodeEditor getFileEditor(File file){
         if(file.getName().endsWith(".java"))                                             
@@ -299,6 +298,7 @@ public class E_MainActivity extends Activity implements RequestListener,Diagnost
         return null;
     }
     
+    
     @Override
     public boolean onRequest(int requestCode,Object data){
         switch(requestCode){
@@ -324,9 +324,9 @@ public class E_MainActivity extends Activity implements RequestListener,Diagnost
                 }catch(IOException e){
                 }
             }break;
-            
-            case REQUEST_OPEN_PROJECT:{
-                
+            }
+         /*   case REQUEST_OPEN_PROJECT:{
+              
                 removeFragmentOnUI(file_browser);
                 
                 project_tree.setProjectDir((File)data);         
@@ -334,11 +334,11 @@ public class E_MainActivity extends Activity implements RequestListener,Diagnost
                 mProjectDiagnostic=new CXProjectDiagnostic(mGradleProject,this);
                 
                 removeFragmentOnUI(project_tree);
-                addFragmentOnUI(project_tree);
+                addFragmentOnUI(project_tree);*
                 
             }break;
                 
-        }
+        }*/
         return true;
     }
     
@@ -363,18 +363,18 @@ public class E_MainActivity extends Activity implements RequestListener,Diagnost
     
     @Override
     public void onDiagDone(){
-        Log.i("eide","onDiagDone");
+       
         printErrors(to_string_list(mProjectDiagnostic.errors));
         printWarnings(to_string_list(mProjectDiagnostic.warnings));
         
-        project_tree.setErrors(mProjectDiagnostic.errors);
+       /* project_tree.setErrors(mProjectDiagnostic.errors);
         project_tree.setWarnings(mProjectDiagnostic.warnings);
         
         boolean show_project_tree=!project_tree.isDetached();
         if(show_project_tree){
             removeFragmentOnUI(project_tree);
             addFragmentOnUI(project_tree);
-        }
+        }*/
     }
     
     private void printErrors(List<String> list){

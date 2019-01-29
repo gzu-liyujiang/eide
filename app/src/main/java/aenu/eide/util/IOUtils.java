@@ -80,7 +80,7 @@ public final class IOUtils
     
     public static void zip_compressF(File srcF,ZipOutputStream zip,String entry) throws IOException{
         
-        final byte[] zip_compressBuf=new byte[4096*2];
+        final byte[] buf=new byte[4096*2];
         
         ZipEntry zipE=new ZipEntry(entry);
         zip.putNextEntry(zipE);
@@ -88,8 +88,8 @@ public final class IOUtils
         int n;
 
         FileInputStream in=new FileInputStream(srcF);
-        while((n=in.read(zip_compressBuf))!=-1)
-            zip.write(zip_compressBuf,0,n);
+        while((n=in.read(buf))!=-1)
+            zip.write(buf,0,n);
         in.close();
     }
 
@@ -107,18 +107,18 @@ public final class IOUtils
 
     public static void zip_compressZ2(ZipFile zF,ZipOutputStream zip) throws IOException{
 
-        final byte[] zip_compressBuf=new byte[4096*2];
         
         FileInputStream fin=new FileInputStream(zF.getName());
         ZipInputStream zin=new ZipInputStream(fin);
         ZipEntry entry;
         int n;
-
+        final byte[] buf=new byte[4096*2];
+        
         while((entry=zin.getNextEntry())!=null){
             zip.putNextEntry(entry);
             InputStream in=zF.getInputStream(entry);
-            while((n=in.read(zip_compressBuf))!=-1)
-                zip.write(zip_compressBuf,0,n);
+            while((n=in.read(buf))!=-1)
+                zip.write(buf,0,n);
             in.close();
         }
 
@@ -128,8 +128,8 @@ public final class IOUtils
 
     public static void zip_compressZ(ZipFile zF,ZipOutputStream zip) throws IOException{
         Enumeration<? extends java.util.zip.ZipEntry> entries=zF.entries();//FIXME bug....
-        final byte[] zip_compressBuf=new byte[4096*2];
         
+        final byte[] buf=new byte[4096*2];
         int n;
 
         for(ZipEntry e=entries.nextElement();entries.hasMoreElements();e=entries.nextElement()){
@@ -139,11 +139,41 @@ public final class IOUtils
             zip.putNextEntry(e);
             InputStream is=zF.getInputStream(e);
 
-            while((n=is.read(zip_compressBuf))!=-1)
-                zip.write(zip_compressBuf,0,n);
+            while((n=is.read(buf))!=-1)
+                zip.write(buf,0,n);
 
             is.close();
         }
+    }
+    
+    public static void zip_uncompress(InputStream zip,File dir) throws IOException{
+        ZipInputStream zip_strm=new ZipInputStream(zip);
+        
+        ZipEntry entry;
+        int n;
+        final byte[] buf=new byte[4096*2];
+        
+
+        while((entry=zip_strm.getNextEntry())!=null){
+            if(entry.getName().endsWith("/")){
+                String name=entry.getName();
+                name=name.substring(0,name.length()-1);
+                new File(dir,name).mkdirs();   
+                continue;
+            }
+            
+            File out=new File(dir,entry.getName());
+            out.getParentFile().mkdirs();
+            
+            FileOutputStream out_strm=new FileOutputStream(out);
+           
+            while((n=zip_strm.read(buf))!=-1)
+                out_strm.write(buf,0,n);
+                
+            out_strm.close();
+            zip_strm.closeEntry();
+        }
+        
     }
     
     public static boolean stream_compare(InputStream in1,InputStream in2) throws IOException{

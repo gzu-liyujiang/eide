@@ -2,6 +2,25 @@
 <resources>
 
     <string name="app_name">eide</string>
-    <string name="hello_world">Hello world!</string>
-
+    <string-array name="new_file_types_str">
+        <item>Java类</item>
+        <item>C/C++文件</item>
+        <item>普通文件</item>
+        <item>目录</item>
+    </string-array>
+    
+    <string-array name="new_file_types_hint">
+        <item>类的完整路径，例如 example.Test</item>
+        <item>C/C++文件，例如 test.c</item>
+        <item>普通文件，例如 src/main/test.txt</item>
+        <item>普通目录，例如 src/main/test</item>
+    </string-array>
+    
+    <string-array name="new_file_types">
+        <item>java_class</item>
+        <item>cx_file</item>
+        <item>file</item>
+        <item>dir</item>
+    </string-array>
+    
 </resources>

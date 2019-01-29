@@ -20,6 +20,8 @@ import android.content.res.ObbInfo;
 import android.content.Context;
 import android.preference.PreferenceManager;
 import android.content.SharedPreferences;
+import java.net.URL;
+import java.net.MalformedURLException;
 
 public class E_Application extends Application
 {
@@ -88,6 +90,11 @@ public class E_Application extends Application
     
     public static final File getProjectDir(){
         return new File("/sdcard/eide");      
+    }
+    
+    public static final URL getNdkUrl() throws MalformedURLException{
+        return new URL("file:///sdcard/aenu/eide-ndk/ndk.tar.xz");
+        //return new URL("https://github.com/aenu/eide-ndk/blob/0.1/ndk.tar.xz?raw=true");
     }
     
     @Override
