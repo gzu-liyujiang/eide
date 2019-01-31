@@ -8,8 +8,7 @@ package aenu.eide;
 
 import aenu.eide.PL.CxxLanguage;
 import aenu.eide.diagnostic.DiagnosticCallback;
-import aenu.eide.diagnostic.DiagnosticInfo;
-import aenu.eide.diagnostic.ProjectDiagnostic;
+import aenu.eide.diagnostic.DiagnosticMessage;
 import aenu.eide.gradle_impl.GradleProject;
 import aenu.eide.view.CodeEditor;
 import aenu.eide.view.CxxEditor;
@@ -43,9 +42,29 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import com.myopicmobile.textwarrior.android.ICodeDiag;
+import aenu.eide.diagnostic.JavaDiagnostic;
 
 public class E_MainActivity extends AppCompatActivity implements RequestListener, DiagnosticCallback
 {
+
+    @Override
+    public void onNewError(DiagnosticMessage msg){
+        project_view.setErrors(diagnostic_server.get_errors());
+    }
+
+    @Override
+    public void onNewWarning(DiagnosticMessage msg){
+        project_view.setWarnings(diagnostic_server.get_warnings());
+    }
+
+    /*
+    @Override
+    public void onClearDiag(File file){
+        project_view.setErrors(diagnostic_server.get_errors());
+        project_view.setWarnings(diagnostic_server.get_warnings());
+    }*/
+    
     public static final int REQUEST_OPEN_PROJECT=0x3584;
     public static final int REQUEST_OPEN_FILE=0x3585;
     
@@ -54,11 +73,10 @@ public class E_MainActivity extends AppCompatActivity implements RequestListener
     public final int event_open_file=0xaa123458;
     
     private GradleProject mGradleProject;
-    private ProjectDiagnostic mProjectDiagnostic;
+    private E_DiagnosticServer diagnostic_server;
     private ProjectView project_view;
     
     private final Map<Class,CodeEditor> EDITOR=new HashMap<>();
-    private final List<Fragment> backStack=new ArrayList<>();
     private DrawerLayout drawer;
     private ViewPager pager;
     
@@ -136,10 +154,12 @@ public class E_MainActivity extends AppCompatActivity implements RequestListener
                 swapProjectIcon();          
                 break;
                case event_open_project:
-            mGradleProject=GradleProject.open(this,new File(data[0]+"/build.gradle"));
+                   mGradleProject=GradleProject.open(this,new File(data[0]+"/build.gradle"));
             
             pager.setAdapter(new ProjectPage(this,new File((String)data[0]),this));
             drawer.openDrawer(Gravity.LEFT);
+           diag_stop();
+           diag_start();
                    break;
             case R.id.menu_file_browser:  
             
@@ -181,9 +201,9 @@ public class E_MainActivity extends AppCompatActivity implements RequestListener
     @Override
     public boolean onPrepareOptionsMenu(Menu menu){
         if(mGradleProject==null)
-            menu.findItem(R.id.menu_compile).setEnabled(false);
+            menu.findItem(R.id.menu_compile).setVisible(false);
         else
-            menu.findItem(R.id.menu_compile).setEnabled(true);
+            menu.findItem(R.id.menu_compile).setVisible(true);
         return super.onPrepareOptionsMenu(menu);
     }
     
@@ -244,6 +264,18 @@ public class E_MainActivity extends AppCompatActivity implements RequestListener
         code_edit_container.addView(editor);       
     }
     
+    private void diag_start(){
+        diagnostic_server=new E_DiagnosticServer();
+        diagnostic_server.addCallback(this);
+        diagnostic_server.start();
+        diagnostic_server.attachDiagnostic(new JavaDiagnostic(mGradleProject.getJavaDir(),null));
+    }
+    
+    private void diag_stop(){
+        if(diagnostic_server!=null)
+            diagnostic_server.stop();
+    }
+    
     private void codeSave(){  
         CodeEditor editor=getCurrentEditor();
         try{
@@ -285,7 +317,7 @@ public class E_MainActivity extends AppCompatActivity implements RequestListener
     private Object[] getFileEditorArgs(File file){
         if(file.getName().endsWith(".c")
         ||file.getName().endsWith(".h"))
-            return new Object[] {CxxLanguage.defaultCFlag(),mProjectDiagnostic};    
+            return new Object[] {CxxLanguage.defaultCFlag(),diagnostic_server};    
  
         else if(file.getName().endsWith(".cpp")
         ||file.getName().endsWith(".cxx")
@@ -293,7 +325,7 @@ public class E_MainActivity extends AppCompatActivity implements RequestListener
         ||file.getName().endsWith(".hpp")
         ||file.getName().endsWith(".hxx")
         ||file.getName().endsWith(".hh"))
-            return new Object[] {CxxLanguage.defaultCFlag(),mProjectDiagnostic};  
+            return new Object[] {CxxLanguage.defaultCFlag(),diagnostic_server};  
 
         return null;
     }
@@ -341,40 +373,19 @@ public class E_MainActivity extends AppCompatActivity implements RequestListener
         }*/
         return true;
     }
-    
-    @Override
-    public void onDiagStart(){
-        
-    }
 
-    private List<String> to_string_list(Map<File,List<DiagnosticInfo>> map){
+    private List<String> to_string_list(Map<File,List<DiagnosticMessage>> map){
         final ArrayList<String> list=new ArrayList<>();
-        final Set<Map.Entry<File,List<DiagnosticInfo>>> entries=map.entrySet();
+        final Set<Map.Entry<File,List<DiagnosticMessage>>> entries=map.entrySet();
         if(entries==null)return list;
-        for(Map.Entry<File,List<DiagnosticInfo>> e:entries){
+        for(Map.Entry<File,List<DiagnosticMessage>> e:entries){
             String fn=e.getKey().getAbsolutePath();
-            List<DiagnosticInfo> infos=e.getValue();
-            for(DiagnosticInfo info:infos){
-                list.add(fn+":"+info.line+":"+info.column+":"+info.info);               
+            List<DiagnosticMessage> infos=e.getValue();
+            for(DiagnosticMessage info:infos){
+                list.add(fn+":"+info.line+":"+info.column+":"+info.text);               
             }
         }
         return list;
-    }
-    
-    @Override
-    public void onDiagDone(){
-       
-        printErrors(to_string_list(mProjectDiagnostic.errors));
-        printWarnings(to_string_list(mProjectDiagnostic.warnings));
-        
-       /* project_tree.setErrors(mProjectDiagnostic.errors);
-        project_tree.setWarnings(mProjectDiagnostic.warnings);
-        
-        boolean show_project_tree=!project_tree.isDetached();
-        if(show_project_tree){
-            removeFragmentOnUI(project_tree);
-            addFragmentOnUI(project_tree);
-        }*/
     }
     
     private void printErrors(List<String> list){

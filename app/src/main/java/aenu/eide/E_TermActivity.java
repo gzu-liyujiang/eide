@@ -21,6 +21,14 @@ import dalvik.system.DexClassLoader;
 import java.io.File;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.widget.TextView;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintWriter;
+import android.view.Gravity;
+import android.graphics.Color;
+import java.io.PrintStream;
+import android.text.method.MovementMethod;
+import android.text.method.ScrollingMovementMethod;
 
 public class E_TermActivity extends AppCompatActivity{
     
@@ -64,7 +72,8 @@ public class E_TermActivity extends AppCompatActivity{
             }
             
         }catch (Exception e) {
-            throw new RuntimeException(e);
+            showException(e);
+            return;
         }
         
         setSupportActionBar((Toolbar)findViewById(R.id.toolbar));
@@ -75,6 +84,24 @@ public class E_TermActivity extends AppCompatActivity{
         getSupportActionBar().setDisplayShowTitleEnabled(true);
         getSupportActionBar().setTitle(session.getTitle());
         startService(intent);
+    }
+    
+    private void showException(Exception e){
+        final TextView T=new TextView(this);
+        final ByteArrayOutputStream buf=new ByteArrayOutputStream();
+        final PrintStream writer=new PrintStream(buf);
+              
+        e.printStackTrace(writer);
+        final String message="异常:\n\n"+buf.toString();
+        
+        writer.close();      
+        
+        T.setText(message);
+        T.setTextColor(Color.RED);
+        T.setGravity(Gravity.CENTER);
+        T.setMovementMethod(ScrollingMovementMethod.getInstance());
+        
+        setContentView(T);
     }
     
     private String getAction(){
@@ -92,12 +119,14 @@ public class E_TermActivity extends AppCompatActivity{
 
     @Override
     public void finish(){
+        if(session!=null)
         session.finish();
         super.finish();
     }
     
     @Override
     protected void onDestroy(){
+        if(intent!=null)
         stopService(intent);
         super.onDestroy();
     }

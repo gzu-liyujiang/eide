@@ -26,7 +26,7 @@ LOCAL_LDLIBS     +=  -llog
 
 LOCAL_SHARED_LIBRARIES := libclang
 
-LOCAL_SRC_FILES :=cx_diagnostic.c
+LOCAL_SRC_FILES :=cx-diag.c
 
 include $(BUILD_SHARED_LIBRARY)
 

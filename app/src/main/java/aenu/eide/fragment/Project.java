@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
 import android.widget.ListView;
-import aenu.eide.diagnostic.DiagnosticInfo;
+import aenu.eide.diagnostic.DiagnosticMessage;
 import android.widget.ArrayAdapter;
 import java.util.Set;
 import android.os.Handler;
@@ -41,8 +41,8 @@ public class Project extends Fragment
     private File project_dir;
     private RequestListener listener;
     private ViewPager project_pager;
-    private Map<File,List<DiagnosticInfo>> errors;
-    private Map<File,List<DiagnosticInfo>> warnings;
+    private Map<File,List<DiagnosticMessage>> errors;
+    private Map<File,List<DiagnosticMessage>> warnings;
     
     public Project(RequestListener l){
         listener=l;
@@ -56,11 +56,11 @@ public class Project extends Fragment
         return this.project_dir;
     }
     
-    public void setErrors(Map<File,List<DiagnosticInfo>> errs){
+    public void setErrors(Map<File,List<DiagnosticMessage>> errs){
         errors=errs;
     }
     
-    public void setWarnings(Map<File,List<DiagnosticInfo>> wars){
+    public void setWarnings(Map<File,List<DiagnosticMessage>> wars){
         warnings=wars;
     }
     
@@ -148,22 +148,22 @@ public class Project extends Fragment
             }
         }
         
-        private List<String> to_string_list(Map<File,List<DiagnosticInfo>> map){
+        private List<String> to_string_list(Map<File,List<DiagnosticMessage>> map){
             final ArrayList<String> list=new ArrayList<>();
             if(map==null) return list;
-            final Set<Map.Entry<File,List<DiagnosticInfo>>> entries=map.entrySet();
+            final Set<Map.Entry<File,List<DiagnosticMessage>>> entries=map.entrySet();
             if(entries==null)return list;
-            for(Map.Entry<File,List<DiagnosticInfo>> e:entries){
+            for(Map.Entry<File,List<DiagnosticMessage>> e:entries){
                 String fn=e.getKey().getAbsolutePath();
-                List<DiagnosticInfo> infos=e.getValue();
-                for(DiagnosticInfo info:infos){
-                    list.add(fn+":"+info.line+":"+info.column+":"+info.info);               
+                List<DiagnosticMessage> infos=e.getValue();
+                for(DiagnosticMessage info:infos){
+                    list.add(fn+":"+info.line+":"+info.column+":"+info.text);               
                 }
             }
             return list;
         }
         
-        public void setErrors(Map<File,List<DiagnosticInfo>> errs){
+        public void setErrors(Map<File,List<DiagnosticMessage>> errs){
             final ArrayAdapter<String> adapter=new ArrayAdapter<String>(context,-1){
                 public View getView(int position,View convertView,ViewGroup parent) {
                     TextView v=convertView!=null?(TextView)convertView:new TextView(context);
@@ -178,7 +178,7 @@ public class Project extends Fragment
             v.setAdapter(adapter);
         }
 
-        public void setWarnings(Map<File,List<DiagnosticInfo>> wars){
+        public void setWarnings(Map<File,List<DiagnosticMessage>> wars){
             final ArrayAdapter<String> adapter=new ArrayAdapter<String>(context,-1){
                 public View getView(int position,View convertView,ViewGroup parent) {
                     TextView v=convertView!=null?(TextView)convertView:new TextView(context);

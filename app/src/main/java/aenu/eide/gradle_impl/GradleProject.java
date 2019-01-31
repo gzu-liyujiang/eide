@@ -53,6 +53,10 @@ public final class GradleProject{
         this.tool_chain=new ToolChain(context);
     }
     
+    public File getJavaDir(){
+        return new File(build_gradle.getParentFile(),"src/main/java");
+    }
+    
     private void analyze_gradle() throws Exception{
         
         G_Tree tree=G_Parser.Parse(IOUtils.file_read2(build_gradle));

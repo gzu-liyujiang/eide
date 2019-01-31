@@ -113,13 +113,13 @@ public final class CXProjectDiagnostic extends ProjectDiagnostic{
         
         private void nc_add_error(String filepath,int startP,int endP,int line,int column,String msg){
             final File file=new File(filepath);
-            final DiagnosticInfo error=DiagnosticInfo.newError(startP,endP,line,column,msg);
-            List<DiagnosticInfo> errors=__ProjectDiagstic.errors.get(file);
+            final DiagnosticMessage error=DiagnosticMessage.newMessage(startP,endP,line,column,msg);
+            List<DiagnosticMessage> errors=__ProjectDiagstic.errors.get(file);
             if(errors==null){
                 errors=new ArrayList<>();
                 __ProjectDiagstic.errors.put(file,errors);
             }
-            Log.w("eide","E:"+file.toString()+":"+error.info);
+            Log.w("eide","E:"+file.toString()+":"+error.text);
             
             if(!errors.contains(error))
                 errors.add(error);
@@ -127,13 +127,13 @@ public final class CXProjectDiagnostic extends ProjectDiagnostic{
         
         private void nc_add_warning(String filepath,int startP,int endP,int line,int column,String msg){
             final File file=new File(filepath);
-            final DiagnosticInfo warning=DiagnosticInfo.newWarning(startP,endP,line,column,msg);
-            List<DiagnosticInfo> warnings=__ProjectDiagstic.warnings.get(file);
+            final DiagnosticMessage warning=DiagnosticMessage.newMessage(startP,endP,line,column,msg);
+            List<DiagnosticMessage> warnings=__ProjectDiagstic.warnings.get(file);
             if(warnings==null){
                 warnings=new ArrayList<>();
                 __ProjectDiagstic.errors.put(file,warnings);
             }
-            Log.w("eide","W:"+file.toString()+":"+warning.info);
+            Log.w("eide","W:"+file.toString()+":"+warning.text);
             
             if(!warnings.contains(warning))
                 warnings.add(warning);

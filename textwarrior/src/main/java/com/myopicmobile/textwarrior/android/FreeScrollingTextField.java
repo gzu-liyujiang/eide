@@ -131,7 +131,7 @@ implements Document.TextFieldMetrics{
 	protected boolean _isEdited = false; // whether the text field is dirtied
 	protected TouchNavigationMethod _navMethod;
 	protected DocumentProvider _hDoc; // the model in MVC
-	private TextFieldController _fieldController; // the controller in MVC
+	protected TextFieldController _fieldController; // the controller in MVC
 	private TextFieldInputConnection _inputConnection;
 	private final Scroller _scroller;
 	private RowListener _rowLis;
@@ -142,10 +142,10 @@ implements Document.TextFieldMetrics{
 	protected int _selectionAnchor = -1; // inclusive
 	protected int _selectionEdge = -1; // exclusive
 
-	private Paint _brush;
+	protected Paint _brush;
 	/** Max amount that can be scrolled horizontally based on the longest line
 	 * displayed on screen so far */
-	private int _xExtent = 0;
+	protected int _xExtent = 0;
 	protected int _tabLength = DEFAULT_TAB_LENGTH_SPACES;
 	protected ColorScheme _colorScheme = new ColorScheme();
     protected boolean _isHighlightRow = false;
@@ -166,7 +166,7 @@ implements Document.TextFieldMetrics{
 	
 	private int _leftOffset=0;
 	//编辑器设置
-	private boolean _showLineNumbers=false;
+	protected boolean _showLineNumbers=false;
     
 	private ClipboardPanel _clipboardPanel;
 	private ClipboardManager _clipboardManager;
@@ -187,17 +187,17 @@ implements Document.TextFieldMetrics{
 
 	private Typeface _italicTypeface=Typeface.create(Typeface.DEFAULT, Typeface.ITALIC);
 
-	private Pair _caretSpan=new Pair(0,0);
+	protected Pair _caretSpan=new Pair(0,0);
 
 	private char _emoji;
 
 	private boolean _isLayout;
 
-	private Paint _brushLine;
+	protected Paint _brushLine;
 
 	private int _alphaWidth;
 
-	private int _spaceWidth;
+	protected int _spaceWidth;
 		
 	private ILexer _lexer;
     
@@ -626,7 +626,7 @@ implements Document.TextFieldMetrics{
 	 * The first row of text to paint, which may be partially visible.
 	 * Deduced from the clipping rectangle given to onDraw()
 	 */
-	private int getBeginPaintRow(Canvas canvas){
+	protected int getBeginPaintRow(Canvas canvas){
 		Rect bounds = canvas.getClipBounds();
 		return bounds.top / rowHeight();
 	}
@@ -635,7 +635,7 @@ implements Document.TextFieldMetrics{
 	 * The last row of text to paint, which may be partially visible.
 	 * Deduced from the clipping rectangle given to onDraw()
 	 */
-	private int getEndPaintRow(Canvas canvas){
+	protected int getEndPaintRow(Canvas canvas){
 		//clip top and left are inclusive; bottom and right are exclusive
 		Rect bounds = canvas.getClipBounds();
 		return (bounds.bottom - 1) / rowHeight();
@@ -740,35 +740,6 @@ implements Document.TextFieldMetrics{
 
 
         final int rowH=rowHeight();
-        int lineY=(beginPaintRow+1)*rowH;
-       
-        boolean line_draw_hint=false;
-        
-        List<ICodeDiag.DiagInfo> errs=null;
-        List<ICodeDiag.DiagInfo> wars=null;
-        BitSet errSet=null;
-        BitSet warSet=null;
-        BitSet errSkip=null;
-        BitSet warSkip=null;
-        
-        
-        if(_diag!=null){
-            errs=_diag.getErrors();
-            wars=_diag.getWarnings();
-            final int err_count=errs==null?0:errs.size();
-            final int war_count=wars==null?0:wars.size();
-            
-            if(err_count!=0){
-                errSet=new BitSet(err_count);
-                errSkip=new BitSet(err_count);           
-            }
-            
-            if(war_count!=0){
-                warSet=new BitSet(war_count);
-                warSkip=new BitSet(war_count);  
-            }
-            
-        }
         
 		while (paintY <= endY && _hDoc.hasNext()){
 
@@ -803,7 +774,6 @@ implements Document.TextFieldMetrics{
 				_caretSpan=currSpan;
 			}
 			char c = _hDoc.next();
-            int lineX=paintX;
             
             if (_fieldController.inSelectionRange(currentIndex)){
 				paintX += drawSelectedText(canvas, c, paintX, paintY);
@@ -812,62 +782,10 @@ implements Document.TextFieldMetrics{
 				paintX += drawChar(canvas, c, paintX, paintY);
 			}
             
-            int lineX2=paintX;
-            
-            {
-                if(errs!=null)
-                  for(int i=0;i<errs.size();i++){
-                      
-                    if(errSkip.get(i)) continue;
-                    ICodeDiag.DiagInfo p=errs.get(i);
-                    if(p.start_position<=currentIndex&&p.end_position>=currentIndex){
-                        draw_line(canvas,lineX,lineX2,lineY,Color.RED);
-                        if(!errSet.get(i)){
-                            draw_small_text(canvas,lineX,lineY+24,p.message);
-                            errSet.set(i);
-                        }
-                        
-                        if(p.end_position==currentIndex)
-                            errSkip.set(i);
-                            
-                        line_draw_hint=true;
-                        break;
-                    }
-                }
-            }
-            
-            {
-                if(wars!=null)
-                    for(int i=0;i<wars.size();i++){
-                        if(warSkip.get(i)) continue;
-                        
-                        ICodeDiag.DiagInfo p=wars.get(i);
-                        if(p.start_position<=currentIndex&&p.end_position>=currentIndex){
-                            draw_line(canvas,lineX,lineX2,lineY,Color.RED);
-                            if(!warSet.get(i)){
-                                draw_small_text(canvas,lineX,lineY+24,p.message);
-                                warSet.set(i);
-                            }
-
-                            if(p.end_position==currentIndex)
-                                warSkip.set(i); 
-                            line_draw_hint=true;
-                           
-                            break;
-                        }
-                    }
-            }      
-            
 			++currentIndex;
 			if (c == ILanguage.NEWLINE){
 				paintY += rowH;
-                lineY += rowH;
                 
-                if(line_draw_hint){
-                    paintY+=24;
-                    lineY+=24;
-                    line_draw_hint=false;
-                }
 				if (paintX >= _xExtent){
 					_xExtent = paintX;
 				}
@@ -882,7 +800,7 @@ implements Document.TextFieldMetrics{
 	/**
 	 * Underline the caret row if the option for highlighting it is set
 	 */
-	private void doOptionHighlightRow(Canvas canvas) {
+	protected void doOptionHighlightRow(Canvas canvas) {
 		if(_isHighlightRow){
 			int y = getPaintBaseline(_caretRow);
 			int originalColor = _brush.getColor();
@@ -894,28 +812,9 @@ implements Document.TextFieldMetrics{
 			_brush.setColor(0x88000000);
 			_brush.setColor(originalColor);
 		}
-	}
+	}  
     
-    private final Paint _lineP=new Paint();{
-        _lineP.setStrokeWidth(4);
-    }
-    
-    private void draw_line(Canvas canvas,float x,float x_end,float Y,int color){
-        _lineP.setColor(color);
-        canvas.drawLine(x,Y,x_end,Y,_lineP);
-    }
-
-    private final Paint _smallTextP=new Paint();{
-        _smallTextP.setTextSize(24);
-        _smallTextP.setAntiAlias(true);
-        _smallTextP.setColor(Color.RED);
-    }
-
-    private void draw_small_text(Canvas canvas,float x,float y,String text){
-        canvas.drawText(text,x,y,_smallTextP);
-    }
-    
-	private int drawChar(Canvas canvas, char c, int paintX, int paintY){
+	protected int drawChar(Canvas canvas, char c, int paintX, int paintY){
 		int originalColor = _brush.getColor();
 		int charWidth = getAdvance(c,paintX);
 		
@@ -969,7 +868,7 @@ implements Document.TextFieldMetrics{
 	}
 
 	// paintY is the baseline for text, NOT the top extent
-	private void drawTextBackground(Canvas canvas, int paintX, int paintY,
+	protected void drawTextBackground(Canvas canvas, int paintX, int paintY,
 									int advance){
 		Paint.FontMetricsInt metrics = _brush.getFontMetricsInt();
  		canvas.drawRect(paintX,
@@ -979,7 +878,7 @@ implements Document.TextFieldMetrics{
 						_brush);
 	}
 
-	private int drawSelectedText(Canvas canvas, char c, int paintX, int paintY){
+	protected int drawSelectedText(Canvas canvas, char c, int paintX, int paintY){
 		int oldColor = _brush.getColor();
 		int advance = getAdvance(c);
 
@@ -994,7 +893,7 @@ implements Document.TextFieldMetrics{
 	}
 
 
-	private void drawCaret(Canvas canvas, int paintX, int paintY){
+	protected void drawCaret(Canvas canvas, int paintX, int paintY){
 		int originalColor = _brush.getColor();
 		_caretX=paintX;
 		_caretY=paintY;
@@ -1006,7 +905,7 @@ implements Document.TextFieldMetrics{
 		_brush.setColor(originalColor);
 	}
 
-	private int drawLineNum(Canvas canvas, String s, int paintX, int paintY){
+	protected int drawLineNum(Canvas canvas, String s, int paintX, int paintY){
 		//int originalColor = _brush.getColor();
 		//_brush.setColor(_colorScheme.getColor(Colorable.NON_PRINTING_GLYPH));
 
@@ -1944,7 +1843,7 @@ implements Document.TextFieldMetrics{
 	//---------------------------------------------------------------------
 	//------------------------- Formatting methods ------------------------
 
-	private boolean reachedNextSpan(int charIndex, Pair span){
+	protected boolean reachedNextSpan(int charIndex, Pair span){
 		return (span == null) ? false : (charIndex == span.getFirst());
 	}
 

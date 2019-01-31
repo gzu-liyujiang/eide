@@ -27,9 +27,10 @@ import aenu.eide.PL.CxxLanguage;
 import aenu.eide.PL.CxxLexer;
 import aenu.eide.PL.CxxAutoCompletePanel;
 import android.util.Log;
-import aenu.eide.diagnostic.CXProjectDiagnostic;
-import aenu.eide.PL.CxxCodeDiag;
-import aenu.eide.diagnostic.ProjectDiagnostic;
+//import aenu.eide.diagnostic.CXProjectDiagnostic;
+//import aenu.eide.PL.CxxCodeDiag;
+//import aenu.eide.diagnostic.ProjectDiagnostic;
+import aenu.eide.E_DiagnosticServer;
 
 
 public class CxxEditor extends CodeEditor {
@@ -46,14 +47,11 @@ public class CxxEditor extends CodeEditor {
 
         final String path=file.getAbsolutePath();
         final String[] flags=(String[]) v[0];
-        final ProjectDiagnostic diag=(ProjectDiagnostic) v[1];
         
         setLanguage(new CxxLanguage(new CxxLexer(path,flags)));
         setAutoComplete(new CxxAutoCompletePanel(this,path,flags));
         
-        if(diag!=null)
-            setCodeDiag(new CxxCodeDiag(diag,file));
-            
+         
         super.read(file,v);
     }
 }

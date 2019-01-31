@@ -2,7 +2,7 @@ package aenu.eide.view;
 import aenu.eide.E_MainActivity;
 import aenu.eide.R;
 import aenu.eide.RequestListener;
-import aenu.eide.diagnostic.DiagnosticInfo;
+import aenu.eide.diagnostic.DiagnosticMessage;
 import aenu.eide.fragment.FileBrowser;
 import aenu.eide.util.IOUtils;
 import android.app.AlertDialog;
@@ -261,22 +261,22 @@ public class ProjectPage extends PagerAdapter implements TreeNode.TreeNodeClickL
     }
     
 
-    private List<String> to_string_list(Map<File,List<DiagnosticInfo>> map){
+    private List<String> to_string_list(Map<File,List<DiagnosticMessage>> map){
         final ArrayList<String> list=new ArrayList<>();
         if(map==null) return list;
-        final Set<Map.Entry<File,List<DiagnosticInfo>>> entries=map.entrySet();
+        final Set<Map.Entry<File,List<DiagnosticMessage>>> entries=map.entrySet();
         if(entries==null)return list;
-        for(Map.Entry<File,List<DiagnosticInfo>> e:entries){
+        for(Map.Entry<File,List<DiagnosticMessage>> e:entries){
             String fn=e.getKey().getAbsolutePath();
-            List<DiagnosticInfo> infos=e.getValue();
-            for(DiagnosticInfo info:infos){
-                list.add(fn+":"+info.line+":"+info.column+":"+info.info);               
+            List<DiagnosticMessage> infos=e.getValue();
+            for(DiagnosticMessage info:infos){
+                list.add(fn+":"+info.line+":"+info.column+":"+info.text);               
             }
         }
         return list;
     }
 
-    public void setErrors(Map<File,List<DiagnosticInfo>> errs){
+    public void setErrors(Map<File,List<DiagnosticMessage>> errs){
         final ArrayAdapter<String> adapter=new ArrayAdapter<String>(context,-1){
             public View getView(int position,View convertView,ViewGroup parent) {
                 TextView v=convertView!=null?(TextView)convertView:new TextView(context);
@@ -291,7 +291,7 @@ public class ProjectPage extends PagerAdapter implements TreeNode.TreeNodeClickL
         v.setAdapter(adapter);
     }
 
-    public void setWarnings(Map<File,List<DiagnosticInfo>> wars){
+    public void setWarnings(Map<File,List<DiagnosticMessage>> wars){
         final ArrayAdapter<String> adapter=new ArrayAdapter<String>(context,-1){
             public View getView(int position,View convertView,ViewGroup parent) {
                 TextView v=convertView!=null?(TextView)convertView:new TextView(context);

@@ -5,8 +5,10 @@
 //   email:202983447@qq.com
 
 package aenu.eide.diagnostic;
+import java.io.File;
 
 public interface DiagnosticCallback{
-    void onDiagStart();
-    void onDiagDone();
+    public void onNewError(DiagnosticMessage msg);
+    public void onNewWarning(DiagnosticMessage msg);
+    //public void onClearDiag(File file);  
 }

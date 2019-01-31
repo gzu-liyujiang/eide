@@ -17,7 +17,7 @@ import android.widget.FrameLayout;
 import com.unnamed.b.atv.view.AndroidTreeView;
 import java.util.List;
 import java.util.ArrayList;
-import aenu.eide.diagnostic.DiagnosticInfo;
+import aenu.eide.diagnostic.DiagnosticMessage;
 import java.util.Set;
 import android.widget.ArrayAdapter;
 import android.graphics.Color;
@@ -50,6 +50,15 @@ public class ProjectView extends ViewPager
         openProject(null,null);
     }
     
+    public void setErrors(Map<File,List<DiagnosticMessage>> errs){
+        ProjectAdapter A=(ProjectView.ProjectAdapter) getAdapter();
+        A.setErrors(errs);
+    }  
+    
+    public void setWarnings(Map<File,List<DiagnosticMessage>> wars){
+        ProjectAdapter A=(ProjectView.ProjectAdapter) getAdapter();
+        A.setWarnings(wars);
+    }  
     
     public void openProject(File project_dir,RequestListener listener){
         this.project_dir=project_dir;
@@ -123,22 +132,22 @@ public class ProjectView extends ViewPager
             }
         }
 
-        private List<String> to_string_list(Map<File,List<DiagnosticInfo>> map){
+        private List<String> to_string_list(Map<File,List<DiagnosticMessage>> map){
             final ArrayList<String> list=new ArrayList<>();
             if(map==null) return list;
-            final Set<Map.Entry<File,List<DiagnosticInfo>>> entries=map.entrySet();
+            final Set<Map.Entry<File,List<DiagnosticMessage>>> entries=map.entrySet();
             if(entries==null)return list;
-            for(Map.Entry<File,List<DiagnosticInfo>> e:entries){
+            for(Map.Entry<File,List<DiagnosticMessage>> e:entries){
                 String fn=e.getKey().getAbsolutePath();
-                List<DiagnosticInfo> infos=e.getValue();
-                for(DiagnosticInfo info:infos){
-                    list.add(fn+":"+info.line+":"+info.column+":"+info.info);               
+                List<DiagnosticMessage> infos=e.getValue();
+                for(DiagnosticMessage info:infos){
+                    list.add(fn+":"+info.line+":"+info.column+":"+info.text);               
                 }
             }
             return list;
         }
 
-        public void setErrors(Map<File,List<DiagnosticInfo>> errs){
+        public void setErrors(Map<File,List<DiagnosticMessage>> errs){
             final ArrayAdapter<String> adapter=new ArrayAdapter<String>(context,-1){
                 public View getView(int position,View convertView,ViewGroup parent) {
                     TextView v=convertView!=null?(TextView)convertView:new TextView(context);
@@ -153,7 +162,7 @@ public class ProjectView extends ViewPager
             v.setAdapter(adapter);
         }
 
-        public void setWarnings(Map<File,List<DiagnosticInfo>> wars){
+        public void setWarnings(Map<File,List<DiagnosticMessage>> wars){
             final ArrayAdapter<String> adapter=new ArrayAdapter<String>(context,-1){
                 public View getView(int position,View convertView,ViewGroup parent) {
                     TextView v=convertView!=null?(TextView)convertView:new TextView(context);
