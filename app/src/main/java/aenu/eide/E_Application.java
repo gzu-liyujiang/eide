@@ -97,8 +97,8 @@ public class E_Application extends Application
     }
     
     public static final URL getNdkUrl() throws MalformedURLException{
-        return new URL("file:///sdcard/aenu/eide-extra/ndk.tar.xz");
-    //return new URL("https://github.com/aenu/eide-extra/blob/0.1/ndk.tar.xz?raw=true");
+        //return new URL("file:///sdcard/aenu/eide-extra/ndk.tar.xz");
+        return new URL("https://github.com/aenu/eide-extra/blob/0.1/ndk.tar.xz?raw=true");
     }
     
     public static final URL getAndroidJarUrl() throws MalformedURLException{
