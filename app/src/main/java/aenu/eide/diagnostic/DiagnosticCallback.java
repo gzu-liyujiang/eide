@@ -10,5 +10,5 @@ import java.io.File;
 public interface DiagnosticCallback{
     public void onNewError(DiagnosticMessage msg);
     public void onNewWarning(DiagnosticMessage msg);
-    //public void onClearDiag(File file);  
+    public void onDiagnosticed();  
 }

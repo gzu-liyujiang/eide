@@ -67,9 +67,9 @@ initialize_jni(JNIEnv* env){
         env,callback,
         "onNewWarning","(Laenu/eide/diagnostic/DiagnosticMessage;)V");
         
-    msg_newMessage=(*env)->GetMethodID(
+    msg_newMessage=(*env)->GetStaticMethodID(
         env,message,
-        "newMessage","(IIIILjava/lang/String;)Laenu/eide/diagnostic/DiagnosticMessage;");
+        "newMessage","(Ljava/lang/String;IIIILjava/lang/String;)Laenu/eide/diagnostic/DiagnosticMessage;");
         
     DiagnosticMessage=(*env)->NewGlobalRef(
         env,message);
@@ -77,7 +77,7 @@ initialize_jni(JNIEnv* env){
 
 static inline void 
 release_jni(JNIEnv* env){
-    (*env)->DeleteGlobalRef(env,DiagnosticMessage)
+    (*env)->DeleteGlobalRef(env,DiagnosticMessage);
 }
 
 #define ON_DIAG(Diagnostic,M) {                         \
@@ -143,7 +143,7 @@ release_jni(JNIEnv* env){
     }                                                   \
 }
 
-__attribute__(hot) static void
+__attribute__((hot)) static void
 cxx_diag_from_file(JNIEnv* env,jobject self,jstring filePath,jobjectArray cxflags,jobject callback){
     
     const char* file_path=(*env)->GetStringUTFChars(env,filePath,NULL);
@@ -206,7 +206,7 @@ cxx_diag_from_file(JNIEnv* env,jobject self,jstring filePath,jobjectArray cxflag
               ON_DIAG(Diag,cb_onNewError);
               break;
           case CXDiagnostic_Fatal:          
-              ON_FATAL(Diag,mid_add_error);      
+              ON_FATAL(Diag,cb_onNewError);      
               break;
       }
       clang_disposeDiagnostic(Diag);
@@ -222,7 +222,7 @@ cxx_diag_from_file(JNIEnv* env,jobject self,jstring filePath,jobjectArray cxflag
 }
 
 
-__attribute__(hot) static void
+__attribute__((hot)) static void
 cxx_diag_from_source(JNIEnv* env,jobject self,jstring filePath,jstring source,jobjectArray cxflags,jobject callback){
     
     const char* file_path=(*env)->GetStringUTFChars(env,filePath,NULL);
@@ -248,6 +248,8 @@ cxx_diag_from_source(JNIEnv* env,jobject self,jstring filePath,jstring source,jo
     sourceFile.Filename=file_path;
     sourceFile.Contents=(*env)->GetStringUTFChars(env,source,NULL);
     sourceFile.Length=(*env)->GetStringUTFLength(env,source);
+    
+    const char* file_data=sourceFile.Contents;
     
     CXTranslationUnit TU;
     enum CXErrorCode EC=
@@ -283,7 +285,7 @@ cxx_diag_from_source(JNIEnv* env,jobject self,jstring filePath,jstring source,jo
               ON_DIAG(Diag,cb_onNewError);
               break;
           case CXDiagnostic_Fatal:          
-              ON_FATAL(Diag,mid_add_error);      
+              ON_FATAL(Diag,cb_onNewError);      
               break;
       }
       clang_disposeDiagnostic(Diag);

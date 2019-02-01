@@ -27,12 +27,6 @@ public final class E_Installer
 
         final ProgressDialog pd = ProgressDialog.show(activity, null, "ToolChain install ...", true, false);
 
-        final Handler handler=new Handler(){
-            public void handleMessage(Message msg){
-                pd.hide();
-            }       
-        };
-
         new Thread(){
             public void run(){         
             
@@ -66,10 +60,12 @@ public final class E_Installer
                     
                     Runtime.getRuntime().exec(binDir+"/busybox --install -s "+binDir)
                         .waitFor();
-
-                    boolean r;        
-                    while(!(r=handler.sendEmptyMessage(0)));
-
+                    activity.runOnUiThread(new Runnable(){
+                            @Override
+                            public void run(){
+                                pd.dismiss();
+                            }
+                        });
                 }catch (Exception e) {
                     throw new RuntimeException(e);
                 }
@@ -77,53 +73,34 @@ public final class E_Installer
         }.start();
     }
     
-    static void install_template_and_key(final Activity activity){
+    static void download_android_jar(final Activity activity){
 
-        final ProgressDialog pd = ProgressDialog.show(activity, null, "ToolChain install ...", true, false);
-
-        final Handler handler=new Handler(){
-            public void handleMessage(Message msg){
-                pd.hide();
-            }       
-        };
+        final ProgressDialog pd = ProgressDialog.show(activity, null, "Downlaod android.jar ...", true, false);
 
         new Thread(){
             public void run(){         
 
                 try{              
-                    final String sdcard="/sdcard";
-                    final String ProjectDir=E_Application.getProjectDir().getAbsolutePath();
-                    final String binDir=E_Application.getBinDir().getAbsolutePath();
-                    
-                    final String list[][]={
-                    {"test.ks",sdcard+"/test.ks"},
-                    {"t.tar.xz",ProjectDir+"/t.tar.xz"},
-                     };
+                InputStream in=E_Application.getAndroidJarUrl().openStream();
+                byte[] buf=new byte[4096*4];
+                int n;
 
-                    final byte[] buf=new byte[4096*4];
-                    int n;             
+                File of=new File(E_Application.getAppPrivateDir(),"android.jar");
+               
+                FileOutputStream out=new FileOutputStream(of);
 
-                    for(String[] i:list){
-                        InputStream in=activity.getAssets().open(i[0]);
-                        FileOutputStream out=new FileOutputStream(i[1]);
+                while((n=in.read(buf))!=-1)
+                    out.write(buf,0,n);
 
-                        while((n=in.read(buf))!=-1)
-                            out.write(buf,0,n);
+                out.close();
+                in.close();
 
-                        out.close();
-                        in.close();         
-
-                        OSUtils.chmod(i[1],0755);
-                    }
-
-                    Runtime.getRuntime().exec(binDir+
-                        "/busybox tar -xJf "+list[1][1]+" -C "
-                        +E_Application.getProjectDir())
-                    .waitFor();
-
-                    boolean r;        
-                    while(!(r=handler.sendEmptyMessage(0)));
-
+                activity.runOnUiThread(new Runnable(){
+                        @Override
+                        public void run(){
+                            pd.dismiss();
+                        }
+                    });
                 }catch (Exception e) {
                     throw new RuntimeException(e);
                 }
@@ -131,19 +108,52 @@ public final class E_Installer
         }.start();
     }
     
+    static void uncompression_data(final Activity activity){
+
+    final ProgressDialog pd = ProgressDialog.show(activity, null, "unzip ...", true, false);
+
+    new Thread(){
+        public void run(){         
+
+        try{             
+        
+        final String list[][]={
+        {"test.ks",E_Application.getAppPrivateDir()+"/test.ks"},
+               };
+
+        final byte[] buf=new byte[4096*4];
+        int n;             
+
+        for(String[] i:list){
+        InputStream in=activity.getAssets().open(i[0]);
+        FileOutputStream out=new FileOutputStream(i[1]);
+
+        while((n=in.read(buf))!=-1)
+            out.write(buf,0,n);
+
+        out.close();
+        in.close();         
+
+        
+        }
+        
+
+        activity.runOnUiThread(new Runnable(){
+            @Override
+            public void run(){
+            pd.dismiss();
+            }
+        });
+        }catch (Exception e) {
+        throw new RuntimeException(e);
+        }
+        }
+    }.start();
+    }
     
     static void install_ndk(final Activity activity,final URL url){
         
         final ProgressDialog pd = ProgressDialog.show(activity, null, "ndk install ...", true, false);
-        
-        final Handler handler=new Handler(){
-            public void handleMessage(Message msg){
-                if(msg.what==0)
-                    pd.hide();
-                else
-                    Toast.makeText(activity,"ndk install fail !",1).show();
-            }       
-        };
         
         new Thread(){
             public void run(){         
@@ -169,13 +179,22 @@ public final class E_Installer
                     
                     Process p= Runtime.getRuntime().exec(cmd);
                     
-                    int ec= p.waitFor();
+                    final int ec= p.waitFor();
                     
                     of.delete();
                     
-                    boolean r;        
-                    while(!(r=handler.sendEmptyMessage(ec)));
                     
+                    
+                activity.runOnUiThread(new Runnable(){
+                    @Override
+                    public void run(){
+                        if(ec==0)
+                    pd.dismiss();
+                    else
+                        Toast.makeText(activity,"ndk install fail !",1).show();
+                    
+                    }
+                });
                 }catch (Exception e) {
                     throw new RuntimeException(e);
                 }

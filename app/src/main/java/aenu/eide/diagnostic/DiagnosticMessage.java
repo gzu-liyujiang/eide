@@ -35,6 +35,12 @@ public final class DiagnosticMessage{
         return this.start_position==DI.start_position
                 &&this.end_position==DI.end_position;
     }
+
+    @Override
+    public String toString(){
+        return ">>"+file+":"+start_position+":"+end_position
+            +":"+line+":"+column+":"+text;
+    }
     
     public static DiagnosticMessage newMessage(String file_path,int startP,int endP,int line,int column,String info){
         return new DiagnosticMessage(new File(file_path),startP,endP,line,column,info);

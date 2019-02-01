@@ -92,9 +92,17 @@ public class E_Application extends Application
         return new File("/sdcard/eide");      
     }
     
+    public static final File getAppPrivateDir(){
+        return new File("/sdcard/.eide");      
+    }
+    
     public static final URL getNdkUrl() throws MalformedURLException{
-        return new URL("file:///sdcard/aenu/eide-ndk/ndk.tar.xz");
-        //return new URL("https://github.com/aenu/eide-ndk/blob/0.1/ndk.tar.xz?raw=true");
+        return new URL("file:///sdcard/aenu/eide-extra/ndk.tar.xz");
+    //return new URL("https://github.com/aenu/eide-extra/blob/0.1/ndk.tar.xz?raw=true");
+    }
+    
+    public static final URL getAndroidJarUrl() throws MalformedURLException{
+        return new URL("https://github.com/aenu/eide-extra/blob/0.1/android.jar?raw=true");
     }
     
     @Override
@@ -145,6 +153,13 @@ public class E_Application extends Application
                 if(!pDir.mkdirs())
                     throw new RuntimeException("mkdir "+pDir.getAbsolutePath()+" fail!");
         }
+        
+        {
+            File apDir=getAppPrivateDir();
+            if(!apDir.exists())
+                if(!apDir.mkdirs())
+                    throw new RuntimeException("mkdir "+apDir.getAbsolutePath()+" fail!");
+        }
     }
     
     private static final Thread Clean=new Thread(){
@@ -154,6 +169,16 @@ public class E_Application extends Application
         }
     };
     
+    public static void PrintException(String tag,Throwable e){
+        ByteArrayOutputStream out=new ByteArrayOutputStream();
+        PrintStream strm=new PrintStream(out);
+        e.printStackTrace(strm);
+        String err=out.toString();
+        strm.close();
+        out.reset();
+        Log.e(tag,err);
+    }
+    
     static final Thread.UncaughtExceptionHandler H=new Thread.UncaughtExceptionHandler(){
         @Override
         public void uncaughtException(Thread p1, Throwable p2){
@@ -161,13 +186,7 @@ public class E_Application extends Application
         }              
         
         void printExceptionMessage(Throwable e){
-            ByteArrayOutputStream out=new ByteArrayOutputStream();
-            PrintStream strm=new PrintStream(out);
-            e.printStackTrace(strm);
-            String err=out.toString();
-            strm.close();
-            out.reset();
-            Log.e("eide",err);
+            PrintException("eide",e);
         }
     } ;
 }

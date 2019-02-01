@@ -9,6 +9,8 @@ import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.jdt.internal.compiler.util.HashtableOfObject;
 import java.util.ArrayList;
 import org.eclipse.jdt.core.compiler.CategorizedProblem;
+import android.util.Log;
+import aenu.eide.E_Application;
 
 public class JavaDiagnostic implements IDiagnostic{
    
@@ -41,6 +43,8 @@ public class JavaDiagnostic implements IDiagnostic{
     public void diag(DiagnosticCallback callback){
     
         try{
+            CompilationUnit[] comp_utins=generate_compilation_units(list_java_files(project_dir));
+            
             if(comp_utins==null)
                 return;
             final int total=comp_utins.length;
@@ -49,7 +53,7 @@ public class JavaDiagnostic implements IDiagnostic{
                 CompilationResult result=new CompilationResult(uint,i,total,400);
                 CompilationUnitDeclaration decl=JavaAutoCompletePanel._parser.parse(uint,result);       
                 JavaAutoCompletePanel._parser.getMethodBodies(decl);
-                if(decl.scope!=null)
+                if(decl.scope!=null){
                     decl.scope.faultInTypes();
                 //if(decl.scope!=null)
                 //    decl.scope.verifyMethods();
@@ -57,10 +61,8 @@ public class JavaDiagnostic implements IDiagnostic{
                 decl.resolve();
                 decl.analyseCode();
                 decl.generateCode();
-
-                if(decl.scope != null)
-                    decl.scope.storeDependencyInfo();
-
+     decl.scope.storeDependencyInfo();
+}
                 decl.finalizeProblems();
 
                 CategorizedProblem[] problems=result.getAllProblems();
@@ -80,13 +82,16 @@ public class JavaDiagnostic implements IDiagnostic{
                     }
             }
         }
-        catch(Exception e){}
+        catch(Exception e){
+            //Log.e("eide",e.toString());
+            //throw new RuntimeException(e);
+            E_Application.PrintException("eide-diag",e);
+        }
         
     }
-
-    private CompilationUnit[] comp_utins;
     
+    private File project_dir;
     public JavaDiagnostic(File dir,List<File> jars){
-        comp_utins=generate_compilation_units(list_java_files(dir));
+        project_dir=dir;
     }
 }

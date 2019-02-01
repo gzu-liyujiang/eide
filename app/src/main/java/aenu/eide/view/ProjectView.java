@@ -25,8 +25,8 @@ import android.view.ViewGroup;
 import aenu.eide.E_MainActivity;
 import android.widget.ImageView;
 import aenu.eide.R;
-import aenu.eide.fragment.FileBrowser;
 import android.view.LayoutInflater;
+import aenu.eide.E_FileActivity;
 
 public class ProjectView extends ViewPager
 {
@@ -233,9 +233,9 @@ public class ProjectView extends ViewPager
 
             icon.setImageResource(f.isDirectory()?R.drawable.ic_folder:R.drawable.ic_file);
             text.setText(f.getName());
-            hint.setText(FileBrowser.FileAdapter.getTimeStr(f.lastModified()));
+            hint.setText(E_FileActivity.FileAdapter.getTimeStr(f.lastModified()));
             if(!f.isDirectory())
-                hint.setText(hint.getText()+" "+FileBrowser.FileAdapter.getSizeStr(f.length()));
+                hint.setText(hint.getText()+" "+E_FileActivity.FileAdapter.getSizeStr(f.length()));
 
             node_view.setPadding(getLeftPadding(mNode,2),2,2,2);
             return node_view;

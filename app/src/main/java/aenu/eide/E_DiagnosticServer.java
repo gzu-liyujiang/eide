@@ -42,6 +42,10 @@ public class E_DiagnosticServer{
         thread.remove_diag(diag);
     }
     
+    public boolean isDiagnosticed(){
+        return !thread.active();
+    }
+    
     public Map<File,List<DiagnosticMessage>> get_warnings(){
         return convert_map(thread.warnings);
     }
@@ -52,9 +56,11 @@ public class E_DiagnosticServer{
     
     private static Map<File,List<DiagnosticMessage>> convert_map(Map<IDiagnostic,List<DiagnosticMessage>> input){
         final Map<File,List<DiagnosticMessage>> map =new HashMap<>();
+        
         final Collection<List<DiagnosticMessage>> values= input.values();
         
         for(List<DiagnosticMessage> i_list:values){
+        
             for(DiagnosticMessage msg:i_list){
                 List<DiagnosticMessage> o_list=map.get(msg.file);
                 if(o_list==null){
@@ -68,7 +74,7 @@ public class E_DiagnosticServer{
         return map;
     }
     
-    private class DiagnosticThread extends Thread implements DiagnosticCallback{  
+    private class DiagnosticThread extends Thread implements DiagnosticCallback{   
         
         private final List<IDiagnostic> undiag_stack=new ArrayList<>();
         private final Map<IDiagnostic,List<DiagnosticMessage>> warnings=new HashMap<>();
@@ -83,6 +89,7 @@ public class E_DiagnosticServer{
                 message=new ArrayList<DiagnosticMessage>();
                 errors.put(current_diag,message);
             }
+        
             message.add(msg);
             for(DiagnosticCallback cb:callbacks){
                 cb.onNewError(msg);
@@ -94,12 +101,31 @@ public class E_DiagnosticServer{
             List<DiagnosticMessage> message=warnings.get(current_diag);
             if(message==null){
                 message=new ArrayList<DiagnosticMessage>();
+            
                 warnings.put(current_diag,message);
             }
+        
             message.add(msg);
             for(DiagnosticCallback cb:callbacks){
                 cb.onNewWarning(msg);
             }
+        }
+        
+        @Override
+        public void onDiagnosticed()
+        {
+        for(DiagnosticCallback cb:callbacks){
+            cb.onDiagnosticed();
+        }
+        }
+        
+        
+        public boolean active(){
+            boolean a;
+        synchronized(DiagnosticThread.this){
+            a=!undiag_stack.isEmpty();
+        }
+        return a;
         }
 
         public void add_diag(IDiagnostic diag){
@@ -167,7 +193,10 @@ public class E_DiagnosticServer{
                     current_diag=undiag_stack.get(index);         
                     current_diag.diag(this);
                     
-                    undiag_stack.remove(index);                               
+                    undiag_stack.remove(index);      
+                    
+                    if(undiag_stack.isEmpty())
+                        onDiagnosticed();
                 }
             }
         }

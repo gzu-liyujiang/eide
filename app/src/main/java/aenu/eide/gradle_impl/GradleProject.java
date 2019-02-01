@@ -53,8 +53,20 @@ public final class GradleProject{
         this.tool_chain=new ToolChain(context);
     }
     
+    public File getProjectDir(){
+        return build_gradle.getParentFile();
+    }
+    
     public File getJavaDir(){
         return new File(build_gradle.getParentFile(),"src/main/java");
+    }
+    
+    public File getJniDir(){
+        return new File(build_gradle.getParentFile(),"src/main/jni");
+    }
+    
+    public File getCxDir(){
+        return new File(build_gradle.getParentFile(),"src/main/cpp");
     }
     
     private void analyze_gradle() throws Exception{
@@ -77,7 +89,7 @@ public final class GradleProject{
     private void load_plugins(List<StringLiteral> names){
         for(StringLiteral name:names){
             if(name.value().equals("com.android.application"))
-                plugins.put(name.value(),new com_android_application());
+                plugins.put(name.value(),new com_android_application(this));
             if(name.value().equals("eide-java-application"))
                 plugins.put(name.value(),new eide_java_application());
             if(name.value().equals("eide-c-application"))

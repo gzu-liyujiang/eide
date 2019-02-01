@@ -44,27 +44,35 @@ import java.util.Map;
 import java.util.Set;
 import com.myopicmobile.textwarrior.android.ICodeDiag;
 import aenu.eide.diagnostic.JavaDiagnostic;
+import aenu.eide.diagnostic.CxDiagnostic;
 
 public class E_MainActivity extends AppCompatActivity implements RequestListener, DiagnosticCallback
 {
 
     @Override
-    public void onNewError(DiagnosticMessage msg){
+    public void onDiagnosticed()
+    {
+    runOnUiThread(new Runnable(){
+        @Override
+        public void run(){
         project_view.setErrors(diagnostic_server.get_errors());
+        project_view.setWarnings(diagnostic_server.get_warnings());
+        
+        }
+    });
+    }
+
+
+    @Override
+    public void onNewError(DiagnosticMessage msg){
+        
     }
 
     @Override
     public void onNewWarning(DiagnosticMessage msg){
-        project_view.setWarnings(diagnostic_server.get_warnings());
+        
     }
 
-    /*
-    @Override
-    public void onClearDiag(File file){
-        project_view.setErrors(diagnostic_server.get_errors());
-        project_view.setWarnings(diagnostic_server.get_warnings());
-    }*/
-    
     public static final int REQUEST_OPEN_PROJECT=0x3584;
     public static final int REQUEST_OPEN_FILE=0x3585;
     
@@ -74,7 +82,7 @@ public class E_MainActivity extends AppCompatActivity implements RequestListener
     
     private GradleProject mGradleProject;
     private E_DiagnosticServer diagnostic_server;
-    private ProjectView project_view;
+    private ProjectPage project_view;
     
     private final Map<Class,CodeEditor> EDITOR=new HashMap<>();
     private DrawerLayout drawer;
@@ -97,8 +105,9 @@ public class E_MainActivity extends AppCompatActivity implements RequestListener
           E_Application.getConfigVersion(this))){
             try{
                   E_Installer.install_toolchain(this);
-                  E_Installer.install_template_and_key(this);
-                  //E_Installer.install_ndk(this,E_Application.getNdkUrl());
+                  E_Installer.uncompression_data(this);
+                  E_Installer.download_android_jar(this);
+                  E_Installer.install_ndk(this,E_Application.getNdkUrl());
                   E_Application.updateConfigVersion(this);
             }
             catch (Exception e) {
@@ -155,8 +164,9 @@ public class E_MainActivity extends AppCompatActivity implements RequestListener
                 break;
                case event_open_project:
                    mGradleProject=GradleProject.open(this,new File(data[0]+"/build.gradle"));
+           project_view= new ProjectPage(this,new File((String)data[0]),this);
             
-            pager.setAdapter(new ProjectPage(this,new File((String)data[0]),this));
+            pager.setAdapter(project_view);
             drawer.openDrawer(Gravity.LEFT);
            diag_stop();
            diag_start();
@@ -232,18 +242,6 @@ public class E_MainActivity extends AppCompatActivity implements RequestListener
         super.onActivityResult(requestCode, resultCode, data);
     }
     
-    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event){
-       /* if(backStack.size()!=0){
-            Fragment f=backStack.get(backStack.size()-1);
-            removeFragmentOnUI(f);
-            if(f instanceof Project)
-                swapProjectIcon();
-            return true;
-        }*/
-        return super.onKeyDown(keyCode, event);
-    }
-    
     private CodeEditor getCurrentEditor(){
         ViewGroup code_edit_container=(ViewGroup)findViewById(R.id.code_edit_container);   
         if(code_edit_container.getChildCount()!=0)
@@ -268,7 +266,34 @@ public class E_MainActivity extends AppCompatActivity implements RequestListener
         diagnostic_server=new E_DiagnosticServer();
         diagnostic_server.addCallback(this);
         diagnostic_server.start();
-        diagnostic_server.attachDiagnostic(new JavaDiagnostic(mGradleProject.getJavaDir(),null));
+        
+        new Thread(){
+            public void run(){
+            try
+            {
+            Thread.sleep(2000);//2秒后开始诊断
+            }
+            catch (InterruptedException e) {}
+            diagnostic_server.attachDiagnostic(new JavaDiagnostic(mGradleProject.getJavaDir(),null));
+        diag_add_cxdiag(diagnostic_server,mGradleProject.getJniDir());}
+        }.start();
+    }
+    
+    private void diag_add_cxdiag(E_DiagnosticServer ser,File dir){
+        File[] list=dir.listFiles();
+        if(list==null) return;
+        for(File file:list){
+            if(file.isDirectory())
+                diag_add_cxdiag(ser,file);
+        else if(file.getName().endsWith(".cpp")
+          ||file.getName().endsWith(".cxx")
+          ||file.getName().endsWith(".cc"))
+            ser.attachDiagnostic(new CxDiagnostic(file,CxxLanguage.defaultCppFlag()));
+        else if(file.getName().endsWith(".c"))
+            ser.attachDiagnostic(new CxDiagnostic(file,CxxLanguage.defaultCFlag()));
+        else
+            continue;
+        }
     }
     
     private void diag_stop(){
@@ -357,43 +382,7 @@ public class E_MainActivity extends AppCompatActivity implements RequestListener
                 }
             }break;
             }
-         /*   case REQUEST_OPEN_PROJECT:{
-              
-                removeFragmentOnUI(file_browser);
-                
-                project_tree.setProjectDir((File)data);         
-                mGradleProject=GradleProject.open(this,new File((File)data,"build.gradle"));
-                mProjectDiagnostic=new CXProjectDiagnostic(mGradleProject,this);
-                
-                removeFragmentOnUI(project_tree);
-                addFragmentOnUI(project_tree);*
-                
-            }break;
-                
-        }*/
+        
         return true;
-    }
-
-    private List<String> to_string_list(Map<File,List<DiagnosticMessage>> map){
-        final ArrayList<String> list=new ArrayList<>();
-        final Set<Map.Entry<File,List<DiagnosticMessage>>> entries=map.entrySet();
-        if(entries==null)return list;
-        for(Map.Entry<File,List<DiagnosticMessage>> e:entries){
-            String fn=e.getKey().getAbsolutePath();
-            List<DiagnosticMessage> infos=e.getValue();
-            for(DiagnosticMessage info:infos){
-                list.add(fn+":"+info.line+":"+info.column+":"+info.text);               
-            }
-        }
-        return list;
-    }
-    
-    private void printErrors(List<String> list){
-        for(String s:list)
-        Log.i("eide","E:"+s);
-    }
-    private void printWarnings(List<String> list){
-        for(String s:list)
-            Log.i("eide","W:"+s);
     }
 }

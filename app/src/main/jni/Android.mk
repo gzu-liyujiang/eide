@@ -14,4 +14,4 @@ include $(PREBUILT_SHARED_LIBRARY)
 
 include $(LOCAL_PATH)/build-libcxxcomplete.mk
 include $(LOCAL_PATH)/build-libcxxlexer.mk
-include $(LOCAL_PATH)/build-libcxxdiag.mk
+include $(LOCAL_PATH)/build-libcx-diag.mk

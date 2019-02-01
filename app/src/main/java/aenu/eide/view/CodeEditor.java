@@ -89,6 +89,8 @@ public class CodeEditor extends FreeScrollingTextField
             IOUtils.file_write(this.path,_hDoc.toString().getBytes());
     }
     
+    /*
+    
     @Override
     protected void onDraw(Canvas canvas) {
 
@@ -110,7 +112,7 @@ public class CodeEditor extends FreeScrollingTextField
      * 绘制
      * @param canvas
      */
-
+/*
     private void realDraw(Canvas canvas){
         int beginPaintRow = getBeginPaintRow(canvas);
         int currentIndex = _hDoc.getLineOffset(beginPaintRow);
@@ -332,7 +334,7 @@ public class CodeEditor extends FreeScrollingTextField
 
     private void draw_small_text(Canvas canvas,float x,float y,String text){
         canvas.drawText(text,x,y,_smallTextP);
-    }
+    }*/
     
     public void setErrors(List<ICodeDiag.DiagInfo> errs){
         errors=errs;

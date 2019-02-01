@@ -21,6 +21,7 @@ import java.util.zip.ZipFile;
 import aenu.eide.util.IOUtils;
 import android.content.Intent;
 import android.net.Uri;
+import aenu.eide.E_Application;
 
 public final class com_android_application implements IPlugin{
     
@@ -45,6 +46,12 @@ public final class com_android_application implements IPlugin{
     private String ndk_stl="c++_static";
     private float compileOptions_targetCompatibility=1.7f;
     private float compileOptions_sourceCompatibility=1.7f;
+    
+    private GradleProject g_project;
+    
+    public com_android_application(GradleProject g_project){
+        this.g_project=g_project;
+    }
     
     public int compileSdkVersion(){
         return compileSdkVersion;
@@ -170,7 +177,7 @@ public final class com_android_application implements IPlugin{
                     {//run aapt
                         File r_dir=new File(build_gradle.getParentFile(),"build/gen");
                         File resDir=new File(build_gradle.getParentFile(),"src/main/res");
-                        File android_jar=new File("/sdcard/.aide/android.jar");//FIXME
+                        File android_jar=new File(E_Application.getAppPrivateDir(),"android.jar");
                         File AndroidManifest_xml=new File(build_gradle.getParentFile(),"src/main/AndroidManifest.xml");
                         if(resDir.exists())
                             if(!tc.run_aapt_gen_r(r_dir,resDir,android_jar,AndroidManifest_xml))
@@ -185,7 +192,7 @@ public final class com_android_application implements IPlugin{
 
                     {//run ecj
 
-                        File android_jar=new File("/sdcard/.aide/android.jar");//FIXME
+                        File android_jar=new File(E_Application.getAppPrivateDir(),"android.jar");
                         File class_out_dir=new File(build_gradle.getParentFile(),"build/bin/class");
                         File src_dir=new File(build_gradle.getParentFile(),"src/main/java");
                         File r_dir=new File(build_gradle.getParentFile(),"build/gen");
@@ -212,6 +219,20 @@ public final class com_android_application implements IPlugin{
                         if(!tc.run_dx_classes(classes_dir,classes_dex))
                             throw new IOException("dx classes!!!!");
                     }
+                    
+                    {//build native lib
+                        if(externalNativeBuild_ndkBuild_path!=null){
+                            File ndk_build =new File(E_Application.getNdkDir(),"ndk-build");
+                            File pDir=externalNativeBuild_ndkBuild_path.getParentFile().getParentFile();
+
+                            ProcessBuilder pBuilder=new ProcessBuilder();
+                            pBuilder.environment().put("PATH",E_Application.getBinDir().getAbsolutePath());
+                            pBuilder.environment().put("TEMPDIR",E_Application.getTmpDir().getAbsolutePath());//clang编译需要
+ 
+                            pBuilder.command(ndk_build.getAbsolutePath(),"-C",pDir.getAbsolutePath())
+                                    .start().waitFor();
+                        }
+                    }
 
                     {//create apk
                         ByteArrayOutputStream apk_buf=new ByteArrayOutputStream();
@@ -221,9 +242,14 @@ public final class com_android_application implements IPlugin{
                         ZipFile aapt_resources=new ZipFile(new File(build_gradle.getParentFile(),"build/bin/resources.zip"));
                         File classes_dex=new File(build_gradle.getParentFile(),"build/bin/classes.dex");
                         File output_apk=new File(build_gradle.getParentFile(),"build/bin/o.apk");
-
+                        File libs_dir=new File(build_gradle.getParentFile(),"src/main/libs");
+                        
                         if(assetsDir.exists()){
                             IOUtils.zip_compressD(assetsDir,apk_strm,"assets");
+                        }
+                  
+                        if(libs_dir.exists()){
+                            IOUtils.zip_compressD(libs_dir,apk_strm,"lib");
                         }
 
                         IOUtils.zip_compressF(classes_dex,apk_strm,classes_dex.getName());
@@ -238,7 +264,7 @@ public final class com_android_application implements IPlugin{
                     {//sign apk
                         File input_apk=new File(build_gradle.getParentFile(),"build/bin/o.apk");
                         File output_apk=new File(build_gradle.getParentFile(),"build/bin/o_sign.apk");
-                        File ks=new File("/sdcard/test.ks");//FIXME
+                        File ks=new File(E_Application.getAppPrivateDir(),"test.ks");//FIXME
                         String pass="android";//FIXME
                         if(!tc.run_apksigner(input_apk,output_apk,ks,pass))
                             throw new IOException("签名失败!!!!");        
@@ -270,7 +296,7 @@ public final class com_android_application implements IPlugin{
     }
 
     private File handle_android_externalNativeBuild_ndkBuild_path(G_Tree.Node node){
-        return null;
+        return new File(g_project.getProjectDir(),(String)node.values().get(0).value());
     }
 
     private File[] handle_android_buildTypes_release_proguardFiles(G_Tree.Node node){
