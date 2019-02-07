@@ -16,7 +16,7 @@ public class CxxLanguage implements ILanguage{
         "-I/data/data/aenu.eide/eide-ndk/sysroot/usr/include"
         ,"-I/data/data/aenu.eide/eide-ndk/sysroot/usr/include/arm-linux-androideabi"
         ,"-I/data/data/aenu.eide/eide-ndk/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-arm/lib/gcc/arm-linux-androideabi/4.9.x/include"
-        ,"-std=c99"
+        ,"-std=gnu11"
                  };
     }
     
@@ -25,7 +25,7 @@ public class CxxLanguage implements ILanguage{
         "-I/data/data/aenu.eide/eide-ndk/sysroot/usr/include"
         ,"-I/data/data/aenu.eide/eide-ndk/sysroot/usr/include/arm-linux-androideabi"
         ,"-I/data/data/aenu.eide/eide-ndk/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-arm/lib/gcc/arm-linux-androideabi/4.9.x/include"
-        ,"-std=c++11"
+        ,"-std=g++11"
         ,"-I/data/data/aenu.eide/eide-ndk/sources/cxx-stl/gnu-libstdc++/4.9/include"
         
         };

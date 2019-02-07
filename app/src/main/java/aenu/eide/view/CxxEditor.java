@@ -31,10 +31,16 @@ import android.util.Log;
 //import aenu.eide.PL.CxxCodeDiag;
 //import aenu.eide.diagnostic.ProjectDiagnostic;
 import aenu.eide.E_DiagnosticServer;
+import com.myopicmobile.textwarrior.android.*;
+import com.myopicmobile.textwarrior.android.ICodeDiag.*;
+import aenu.eide.diagnostic.*;
 
 
-public class CxxEditor extends CodeEditor {
-
+public class CxxEditor extends CodeEditor implements ICodeDiag
+{
+    
+    E_DiagnosticServer diag_ser;
+    String[] flags;
     public CxxEditor(Context context, AttributeSet attributeSet) {
         super(context, attributeSet);
     }
@@ -46,12 +52,21 @@ public class CxxEditor extends CodeEditor {
     public void read(File file,Object... v) throws IOException {
 
         final String path=file.getAbsolutePath();
-        final String[] flags=(String[]) v[0];
-        
+        //final String[]
+        flags=(String[]) v[0];
+        diag_ser=(E_DiagnosticServer) v[1];
         setLanguage(new CxxLanguage(new CxxLexer(path,flags)));
         setAutoComplete(new CxxAutoCompletePanel(this,path,flags));
-        
+        setCodeDiag(this);
          
         super.read(file,v);
     }
+    
+    @Override
+    public void diag(String code, ICodeDiag.DiagResult dr)
+    {
+        CxUnfDiagnostic cud=new CxUnfDiagnostic(new File(path),code,flags);
+        diag_ser.updateDiagnostic(cud);   
+    }
+    
 }

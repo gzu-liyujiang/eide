@@ -116,7 +116,11 @@ class E_TermSession extends TermSession {
         
         String argc="/system/bin/sh";
         String args[]={"-"};
-        String env[]={"TERM=term"};
+        String env[]={
+            "TERM=term",
+            "APP_PIE_REQUIRED=true",
+            "TEMPDIR=/data/data/aenu.eide/eide-tmp",
+            "PATH=/data/data/aenu.eide/eide-bin"};
         
         mProcId=TermExec.createSubprocess(mTermFd,argc,args,env);
         

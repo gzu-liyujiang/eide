@@ -42,7 +42,9 @@ static inline int read_file(const char* const path,char** ptr){
 }
 
 static inline unsigned getLineEnd(const char* text,int off){
-    while(text[++off]!='\n');
+    char c;
+    while(c=text[++off])
+        if(c=='\n') break;
     return off;
 }
 
@@ -81,43 +83,6 @@ release_jni(JNIEnv* env){
 }
 
 #define ON_DIAG(Diagnostic,M) {                         \
-    CXFile File;                                        \
-    unsigned Line,Column,Position;                      \
-    clang_getSpellingLocation(                          \
-      clang_getDiagnosticLocation(Diagnostic),          \
-        &File,&Line,&Column,&Position);                 \
-    if (File) {                                         \
-      CXString FName = clang_getFileName(File);         \
-      unsigned N = clang_getDiagnosticNumRanges(Diagnostic);           \
-      CXFile StartFile, EndFile;                                       \
-      unsigned StartP,EndP;                                            \
-      CXSourceRange SRange = clang_getDiagnosticRange(Diagnostic,0);   \
-      CXSourceRange ERange = clang_getDiagnosticRange(Diagnostic,N-1); \
-      clang_getSpellingLocation(clang_getRangeStart(SRange),           \
-                                  &StartFile,0,0,&StartP);             \
-      clang_getSpellingLocation(clang_getRangeEnd(ERange),             \
-                                  &EndFile,0,0,&EndP);                 \
-      if (StartFile == EndFile && StartFile == File){                  \
-        CXString Text = clang_getDiagnosticSpelling(Diagnostic);       \
-        const char* text__=clang_getCString(Text);                     \
-        const char* file__=clang_getCString(FName);                    \
-        jstring loc_text=(*env)->NewStringUTF(env,text__?:"...");      \
-        clang_disposeString(Text);                                     \
-        jstring loc_file=(*env)->NewStringUTF(env,file__);             \
-        jobject msg=(*env)->CallStaticObjectMethod(env,                \
-            DiagnosticMessage,msg_newMessage,                          \
-                loc_file,StartP,EndP,Line,Column,loc_text);            \      
-        (*env)->CallVoidMethod(env,callback,M,msg);                    \
-        (*env)->DeleteLocalRef(env, msg);             \    
-        (*env)->DeleteLocalRef(env, loc_text);        \
-        (*env)->DeleteLocalRef(env, loc_file);        \
-      }                                               \
-      clang_disposeString(FName);                     \
-    }                                                 \
-}                        
-
-
-#define ON_FATAL(Diagnostic,M) {                        \
     CXFile File;                                        \
     unsigned Line,Column,Position;                      \
     clang_getSpellingLocation(                          \
@@ -193,21 +158,29 @@ cxx_diag_from_file(JNIEnv* env,jobject self,jstring filePath,jobjectArray cxflag
     unsigned NumDiags;
     CXDiagnostic Diag;
     CXString DiagStr;
+enum CXDiagnosticSeverity ds;
+
 
     NumDiags=clang_getNumDiagnostics(TU);
 
     for (int i=0;i!=NumDiags;++i){
       Diag=clang_getDiagnostic(TU,i);
-      switch(clang_getDiagnosticSeverity(Diag)){
+      
+      switch(ds=clang_getDiagnosticSeverity(Diag)){
           case CXDiagnostic_Warning:
+			//  LOGW("CXDiagnostic_Warning");
               ON_DIAG(Diag,cb_onNewWarning);
               break;
           case CXDiagnostic_Error:   
+			//  LOGW("CXDiagnostic_Error");
               ON_DIAG(Diag,cb_onNewError);
               break;
-          case CXDiagnostic_Fatal:          
-              ON_FATAL(Diag,cb_onNewError);      
+          case CXDiagnostic_Fatal:   
+			//  LOGW("CXDiagnostic_Fatal");
+              ON_DIAG(Diag,cb_onNewError);      
               break;
+          default:LOGW("kk %d",ds);
+             break;
       }
       clang_disposeDiagnostic(Diag);
     }
@@ -285,7 +258,7 @@ cxx_diag_from_source(JNIEnv* env,jobject self,jstring filePath,jstring source,jo
               ON_DIAG(Diag,cb_onNewError);
               break;
           case CXDiagnostic_Fatal:          
-              ON_FATAL(Diag,cb_onNewError);      
+              ON_DIAG(Diag,cb_onNewError);      
               break;
       }
       clang_disposeDiagnostic(Diag);

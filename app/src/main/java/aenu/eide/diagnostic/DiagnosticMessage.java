@@ -32,7 +32,7 @@ public final class DiagnosticMessage{
             return false;
             
         DiagnosticMessage DI=(DiagnosticMessage)obj;
-        return this.start_position==DI.start_position
+        return this.file.equals(DI.file)&&this.start_position==DI.start_position
                 &&this.end_position==DI.end_position;
     }
 

@@ -21,6 +21,7 @@ import java.io.FileOutputStream;
 import android.util.Log;
 import jackpal.androidterm.TermExec;
 import android.os.ParcelFileDescriptor;
+import java.io.*;
 
 public final class eide_c_application implements IPlugin{
     private String scriptType="Android.mk";
@@ -55,6 +56,8 @@ public final class eide_c_application implements IPlugin{
                 if(scriptPath!=null){
                     try{
                         
+                        String errMsg;
+                        
                         {// exec ndk-build
                             File ndk_build =new File(E_Application.getNdkDir(),"ndk-build");
                             File pDir=scriptPath.getParentFile().getParentFile();
@@ -64,9 +67,11 @@ public final class eide_c_application implements IPlugin{
                             pBuilder.environment().put("APP_PIE_REQUIRED","true");//安卓版本 >= 16
                             pBuilder.environment().put("TEMPDIR",E_Application.getTmpDir().getAbsolutePath());//clang编译需要
                         
-                            pBuilder.command(ndk_build.getAbsolutePath(),"-C",pDir.getAbsolutePath())
-                                    .start().waitFor();
+                            Process ppp=pBuilder.command(ndk_build.getAbsolutePath(),"-C",pDir.getAbsolutePath())
+                                    .start();
+                            ppp.waitFor();
                             
+                            errMsg=IOUtils.stream_read(ppp.getErrorStream());
                         }         
             
                         File exec_bin = null;
@@ -83,7 +88,7 @@ public final class eide_c_application implements IPlugin{
                                 
                             }
                             
-                            if(exec_bin==null) throw new RuntimeException("....");
+                            if(exec_bin==null) throw new RuntimeException(errMsg);
                         }
                         
                         {// exec bin

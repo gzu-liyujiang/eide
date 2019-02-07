@@ -24,7 +24,7 @@ LOCAL_CPPFLAGS   +=  -Os -marm -frtti -fexceptions -std=c++11
 
 LOCAL_LDLIBS     +=  -llog
 
-LOCAL_SHARED_LIBRARIES := libclang
+LOCAL_SHARED_LIBRARIES := libclang-7
 
 LOCAL_SRC_FILES :=cx-diag.c
 

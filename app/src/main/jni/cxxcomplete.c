@@ -100,9 +100,87 @@ cxx_complete(JNIEnv* env,jobject self,jstring source,jint pos,jint replacePos,js
     memcpy(input,&sourceFile.Contents[replacePos],len);     
     input[len]=0;
     strlow(input);
+    
+    {//default
+    
+        typedef struct{
+            const char* const text;
+            const char* const hint;        
+        }CodeComplete;
+        static const CodeComplete DCC[]={
+            //
+            {"#ifdef",0},
+            {"#define",0},
+            {"#else",0},
+            {"#ifndef",0},
+            {"#endif",0},
+            {"#include",0},
+            {"#program",0},
+            {"#error",0},
+            {"#undef",0}
+            //
+            {"__attribute__((",0},
+            //
+            {"__builtin_return_address(",0},
+            {"__builtin_frame_address(",0},
+            {"__builtin_expect(",0},
+            {"__builtin_memcpy(",0},
+            {"__builtin_memset(",0},
+            {"__builtin_memcmp(",0},
+            {"__builtin_strcat(",0},
+            {"__builtin_strcmp(",0},
+            {"__builtin_strcpy(",0},
+            {"__builtin_strlen(",0},
+            {"__builtin_log(",0},
+            {"__builtin_cos(",0},
+            {"__builtin_abs(",0},
+            {"__builtin_exp(",0},    
+            {"__builtin_printf(",0},
+            {"__builtin_scanf(",0},
+            {"__builtin_putchar(",0},
+            {"__builtin_puts(",0},
+        };
+        
+        for(int i=0;i<sizeof(DCC)/sizeof(DCC[0]);i++)
+            if(__builtin_memcmp(input,DCC[i].text,len)==0){
+                jstring loc_text;
+                jstring loc_hint;
+            
+                (*env)->CallVoidMethod(env,self,mid_add_complete,
+                  0,
+                  loc_text=(*env)->NewStringUTF(env,DCC[i].text),
+                  loc_hint=(DCC[i].hint==0?0:(*env)->NewStringUTF(env,DCC[i].hint)) );
+            
+                //.....
+                (*env)->DeleteLocalRef(env, loc_text);
+                if(loc_hint) (*env)->DeleteLocalRef(env, loc_hint);
+            }
+    }
+    
+    /*
+#define BTH(OUT,IN,BITS) {\
+    OUT=0;\
+    for(unsigned i=0;i<BITS;i++){ \
+        unsigned t=1;\
+        for(int j=0;j<i;j++){ \
+            t*=10; \
+            if(IN/t%10==1) \
+                OUT|=(1<<j);\
+        }\
+    }\
+}
+    
+    unsigned ccOpt;
+    
+    //        10987654321098765432109876543210
+    BTH(ccOpt,          1111111111111111111111,32);
+    
+#undef BTH   */
 
+    unsigned ccOpt=0x001fffff;//
+    
     CXCodeCompleteResults* compResults = clang_codeCompleteAt(translationUnit, sourceFile.Filename,
-        line, column,&sourceFile, 1, clang_defaultCodeCompleteOptions());
+        line, column,&sourceFile, 1, ccOpt);//clang_defaultCodeCompleteOptions());
    
    // LOGW("N %d",compResults->NumResults);
         
@@ -126,7 +204,8 @@ cxx_complete(JNIEnv* env,jobject self,jstring source,jint pos,jint replacePos,js
             enum CXCompletionChunkKind cx_kind = clang_getCompletionChunkKind(result.CompletionString,j);
          
             switch(cx_kind){
-                HANDLE_CASE(Optional,            
+                HANDLE_CASE(Optional,    
+                  sprintf(&text[strlen(text)],"%s",clang_getCString(cx_text));
                 );
                 HANDLE_CASE(TypedText,
                   sprintf(&text[strlen(text)],"%s",clang_getCString(cx_text));
@@ -196,10 +275,10 @@ cxx_complete(JNIEnv* env,jobject self,jstring source,jint pos,jint replacePos,js
     
         char text_low[256];
        
-        strcpy(text_low,text);
+        __builtin_strcpy(text_low,text);
         strlow(text_low);
         
-        if(memcmp(input,text_low,len)==0){
+        if(__builtin_memcmp(input,text_low,len)==0){
             
             jstring loc_text;
             jstring loc_hint;
@@ -212,7 +291,7 @@ cxx_complete(JNIEnv* env,jobject self,jstring source,jint pos,jint replacePos,js
             //.....
             (*env)->DeleteLocalRef(env, loc_text);
             if(loc_hint) (*env)->DeleteLocalRef(env, loc_hint);
-          }     
+        }     
     }
     
     (*env)->ReleaseStringUTFChars(env,source_file_path,sourceFile.Filename);

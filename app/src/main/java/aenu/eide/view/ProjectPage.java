@@ -66,8 +66,8 @@ public class ProjectPage extends PagerAdapter implements TreeNode.TreeNodeClickL
 
     private final void initialize(){
 
-        views.put("错误",newListView("无错误"));
-        views.put("警告",newListView("无警告"));
+        views.put("错误",newListView("无错误",Color.RED));
+        views.put("警告",newListView("无警告",0xffff8040));
         views.put("项目",
         project_dir==null?newTextView("未打开项目"):newProjectView());
     }
@@ -80,7 +80,7 @@ public class ProjectPage extends PagerAdapter implements TreeNode.TreeNodeClickL
         return v;
     }
 
-    private final View newListView(String empty_message){
+    private final View newListView(String empty_message,int message_text_color){
         final FrameLayout v=new FrameLayout(context);
         final ListView l=new ListView(context);
         final TextView e=newTextView(empty_message);
@@ -90,6 +90,7 @@ public class ProjectPage extends PagerAdapter implements TreeNode.TreeNodeClickL
         l.setId(android.R.id.list);
         l.setEmptyView(e);
         l.setOnItemClickListener(MSG_CLICK);
+        l.setAdapter(new_diag_msg_adapter(message_text_color));
         return v;
     }
      
@@ -289,6 +290,7 @@ public class ProjectPage extends PagerAdapter implements TreeNode.TreeNodeClickL
         return list;
     }*/
     
+    /*
     private List<DiagnosticMessage> list_all_diag_msg(Map<File,List<DiagnosticMessage>> map){
         final ArrayList<DiagnosticMessage> list=new ArrayList<>();
         if(map==null) return list;
@@ -300,14 +302,14 @@ public class ProjectPage extends PagerAdapter implements TreeNode.TreeNodeClickL
             list.addAll(v);
         
         return list;
-    }
+    }*/
     
-    private ArrayAdapter<DiagnosticMessage> new_diag_msg_adapter(Map<File,List<DiagnosticMessage>> list){
+    private ArrayAdapter<DiagnosticMessage> new_diag_msg_adapter(final int textColor){
         final ArrayAdapter<DiagnosticMessage> adapter=new ArrayAdapter<DiagnosticMessage>(context,-1){
             public View getView(int position,View convertView,ViewGroup parent) {
                 TextView v=convertView!=null?(TextView)convertView:new TextView(context);
                 DiagnosticMessage msg=getItem(position);
-                v.setTextColor(Color.RED);
+                v.setTextColor(textColor);
                 String text="";{
                     text+=msg.file.getAbsolutePath();
                     text+=":"+msg.line;
@@ -319,22 +321,41 @@ public class ProjectPage extends PagerAdapter implements TreeNode.TreeNodeClickL
                 return v;
             }          
         };
-        adapter.addAll(list_all_diag_msg(list));    
         return adapter;
     }
 
-    public void setErrors(Map<File,List<DiagnosticMessage>> errs){
-        final ArrayAdapter<DiagnosticMessage> adapter=new_diag_msg_adapter(errs);
+    public void addError(DiagnosticMessage err){
+        final ListView v=(ListView)views.get("错误").findViewById(android.R.id.list);    
+        final ArrayAdapter<DiagnosticMessage> adapter=(ArrayAdapter<DiagnosticMessage>) v.getAdapter();
         
-        final ListView v=(ListView)views.get("错误").findViewById(android.R.id.list);
-        v.setAdapter(adapter);
+        adapter.add(err);
+        adapter.notifyDataSetChanged();
     }
 
-    public void setWarnings(Map<File,List<DiagnosticMessage>> wars){
-        final ArrayAdapter<DiagnosticMessage> adapter=new_diag_msg_adapter(wars); 
+    public void addWarning(DiagnosticMessage war){
+        
+        final ListView v=(ListView)views.get("警告").findViewById(android.R.id.list);
+        final ArrayAdapter<DiagnosticMessage> adapter=(ArrayAdapter<DiagnosticMessage>) v.getAdapter();
+        
+        adapter.add(war);
+        adapter.notifyDataSetChanged();
+    }
+    
+    public void removeError(DiagnosticMessage err){
+        final ListView v=(ListView)views.get("错误").findViewById(android.R.id.list);    
+        final ArrayAdapter<DiagnosticMessage> adapter=(ArrayAdapter<DiagnosticMessage>) v.getAdapter();
+
+        adapter.remove(err);
+        adapter.notifyDataSetChanged();
+    }
+
+    public void removeWarning(DiagnosticMessage war){
 
         final ListView v=(ListView)views.get("警告").findViewById(android.R.id.list);
-        v.setAdapter(adapter);
+        final ArrayAdapter<DiagnosticMessage> adapter=(ArrayAdapter<DiagnosticMessage>) v.getAdapter();
+
+        adapter.remove(war);
+        adapter.notifyDataSetChanged();
     }
 
     @Override

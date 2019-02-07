@@ -53,6 +53,7 @@ public class JavaDiagnostic implements IDiagnostic{
                 CompilationResult result=new CompilationResult(uint,i,total,400);
                 CompilationUnitDeclaration decl=JavaAutoCompletePanel._parser.parse(uint,result);       
                 JavaAutoCompletePanel._parser.getMethodBodies(decl);
+                
                 if(decl.scope!=null){
                     decl.scope.faultInTypes();
                 //if(decl.scope!=null)

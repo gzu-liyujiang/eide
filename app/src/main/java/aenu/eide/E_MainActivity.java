@@ -45,33 +45,10 @@ import java.util.Set;
 import com.myopicmobile.textwarrior.android.ICodeDiag;
 import aenu.eide.diagnostic.JavaDiagnostic;
 import aenu.eide.diagnostic.CxDiagnostic;
+import android.app.*;
 
-public class E_MainActivity extends AppCompatActivity implements RequestListener, DiagnosticCallback
+public class E_MainActivity extends AppCompatActivity implements RequestListener
 {
-
-    @Override
-    public void onDiagnosticed()
-    {
-    runOnUiThread(new Runnable(){
-        @Override
-        public void run(){
-        project_view.setErrors(diagnostic_server.get_errors());
-        project_view.setWarnings(diagnostic_server.get_warnings());
-        
-        }
-    });
-    }
-
-
-    @Override
-    public void onNewError(DiagnosticMessage msg){
-        
-    }
-
-    @Override
-    public void onNewWarning(DiagnosticMessage msg){
-        
-    }
 
     public static final int REQUEST_OPEN_PROJECT=0x3584;
     public static final int REQUEST_OPEN_FILE=0x3585;
@@ -88,6 +65,63 @@ public class E_MainActivity extends AppCompatActivity implements RequestListener
     private DrawerLayout drawer;
     private ViewPager pager;
     
+    private final DiagnosticCallback diag_cb=new DiagnosticCallback(){
+        @Override
+        public void onChanged(){
+            runOnUiThread(new Runnable(){
+                    @Override
+                    public void run(){
+                        CodeEditor editor=getCurrentEditor();
+                        if(editor!=null){
+                            editor._diag_result.warnings=convert_info(diagnostic_server.getWarnings(editor.getPath()));
+                            editor._diag_result.errors=convert_info(diagnostic_server.getErrors(editor.getPath()));                 
+                        }
+                    }
+                });
+        }
+
+
+        @Override
+        public void onClearError(final DiagnosticMessage msg){
+            runOnUiThread(new Runnable(){
+                    @Override
+                    public void run(){
+                        project_view.removeError(msg);
+                    }
+                });
+        }
+
+        @Override
+        public void onClearWarning(final DiagnosticMessage msg){
+            runOnUiThread(new Runnable(){
+                    @Override
+                    public void run(){
+                        project_view.removeWarning(msg);
+                    }
+                });  
+        }
+
+        @Override
+        public void onNewError(final DiagnosticMessage msg){
+            runOnUiThread(new Runnable(){
+                    @Override
+                    public void run(){
+                        project_view.addError(msg);
+                    }
+                });
+        }
+
+        @Override
+        public void onNewWarning(final DiagnosticMessage msg){
+            runOnUiThread(new Runnable(){
+                    @Override
+                    public void run(){
+                        project_view.addWarning(msg);
+                    }
+                });
+        }
+    };
+    
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -102,24 +136,15 @@ public class E_MainActivity extends AppCompatActivity implements RequestListener
         initActionBar();
         
         if(!E_Application.getAppVersion().equals(
-          E_Application.getConfigVersion(this))){
-            try{
-                  E_Installer.install_toolchain(this);
-                  E_Installer.uncompression_data(this);
-                  E_Installer.download_android_jar(this);
-                  E_Installer.install_ndk(this,E_Application.getNdkUrl());
-                  E_Application.updateConfigVersion(this);
-            }
-            catch (Exception e) {
-                E_Application.clearConfigVersion(this);
-                throw new RuntimeException(e);
-            }
-        }
+          E_Application.getConfigVersion(this)))      
+                  E_Installer.install(this,
+                    ProgressDialog.show(this, null, ">>>>", true, false));      
         
     }
   
     
     private void initEditor(){
+        EDITOR.put(CodeEditor.class,new CodeEditor(this,R.style.FreeScrollingTextField_Light));
         EDITOR.put(JavaEditor.class,new JavaEditor(this,R.style.FreeScrollingTextField_Light));
         EDITOR.put(CxxEditor.class,new CxxEditor(this,R.style.FreeScrollingTextField_Light));  
         EDITOR.put(GradleEditor.class,new GradleEditor(this,R.style.FreeScrollingTextField_Light));  
@@ -242,6 +267,8 @@ public class E_MainActivity extends AppCompatActivity implements RequestListener
         super.onActivityResult(requestCode, resultCode, data);
     }
     
+    
+    
     private CodeEditor getCurrentEditor(){
         ViewGroup code_edit_container=(ViewGroup)findViewById(R.id.code_edit_container);   
         if(code_edit_container.getChildCount()!=0)
@@ -264,22 +291,17 @@ public class E_MainActivity extends AppCompatActivity implements RequestListener
     
     private void diag_start(){
         diagnostic_server=new E_DiagnosticServer();
-        diagnostic_server.addCallback(this);
+        diagnostic_server.addCallback(diag_cb);
         diagnostic_server.start();
         
-        new Thread(){
-            public void run(){
-            try
-            {
-            Thread.sleep(2000);//2秒后开始诊断
-            }
-            catch (InterruptedException e) {}
-            diagnostic_server.attachDiagnostic(new JavaDiagnostic(mGradleProject.getJavaDir(),null));
-        diag_add_cxdiag(diagnostic_server,mGradleProject.getJniDir());}
-        }.start();
+        diagnostic_server.attachDiagnostic(new JavaDiagnostic(mGradleProject.getJavaDir(),null));
+        diag_add_cxdiag(diagnostic_server,mGradleProject.getJniDir());
     }
     
     private void diag_add_cxdiag(E_DiagnosticServer ser,File dir){
+        
+        if(!dir.exists()) return;
+        
         File[] list=dir.listFiles();
         if(list==null) return;
         for(File file:list){
@@ -377,6 +399,10 @@ public class E_MainActivity extends AppCompatActivity implements RequestListener
                     if(editor!=null){
                         setCurrentEditor(editor);
                         editor.read((File)data,args);
+                        editor._diag_result.warnings=
+                                convert_info(diagnostic_server.getWarnings((File)data));
+                        editor._diag_result.errors=
+                                convert_info(diagnostic_server.getErrors((File)data));               
                     }
                 }catch(IOException e){
                 }
@@ -384,5 +410,17 @@ public class E_MainActivity extends AppCompatActivity implements RequestListener
             }
         
         return true;
+    }
+    
+    public List<ICodeDiag.DiagInfo> convert_info(List<DiagnosticMessage> list){
+        final int s= list.size();
+        List<ICodeDiag.DiagInfo> r=new ArrayList<>();
+        for(int i=0;i<s;i++){
+            DiagnosticMessage in=list.get(i);         
+            ICodeDiag.DiagInfo out=new ICodeDiag.DiagInfo(in.start_position,in.end_position,in.text);
+            r.add(i,out);
+        }
+        
+        return r;
     }
 }

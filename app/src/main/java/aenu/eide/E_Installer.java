@@ -19,103 +19,127 @@ import android.os.Handler;
 import android.os.Message;
 import android.widget.Toast;
 import aenu.eide.util.OSUtils;
+import android.content.res.*;
 
 public final class E_Installer
 {
     
-    static void install_toolchain(final Activity activity){
-
-        final ProgressDialog pd = ProgressDialog.show(activity, null, "ToolChain install ...", true, false);
-
+    static void install(final Activity activity,final ProgressDialog p_dialog){
         new Thread(){
-            public void run(){         
+            public void run(){      
             
-                try{              
-                    final String binDir=E_Application.getBinDir().getAbsolutePath();
-                    final String dexDir=E_Application.getDexDir().getAbsolutePath();
-                    
-                    final String list[][]={
-                      {"bin/arm/aapt",binDir+"/aapt"},
-                      {"bin/arm/aidl",binDir+"/aidl"},
-                      {"bin/arm/busybox",binDir+"/busybox"},
-                      {"bin/dx.jar",dexDir+"/dx.jar"},
-                      {"bin/apksigner.jar",dexDir+"/apksigner.jar"}
-                    };
-                    
-                    final byte[] buf=new byte[4096*4];
-                    int n;             
-                    
-                    for(String[] i:list){
-                        InputStream in=activity.getAssets().open(i[0]);
-                        FileOutputStream out=new FileOutputStream(i[1]);
-                        
-                        while((n=in.read(buf))!=-1)
-                            out.write(buf,0,n);
+                try{
+                    final AssetManager assetM=activity.getAssets();
 
-                        out.close();
-                        in.close();         
-                        
-                        OSUtils.chmod(i[1],0755);
+                    {//install toolchain
+                        activity.runOnUiThread(new Runnable(){
+                                @Override
+                                public void run(){
+                                    p_dialog.setMessage("install toochain....");
+                                }
+                            });
+                        install_toolchain(assetM);                  
+                    }
+
+                    {//download android.jar
+                        activity.runOnUiThread(new Runnable(){
+                                @Override
+                                public void run(){
+                                    p_dialog.setMessage("downlaod android.jar....");
+                                }
+                            });
+                        download_android_jar(E_Application.getAndroidJarUrl());
                     }
                     
-                    Runtime.getRuntime().exec(binDir+"/busybox --install -s "+binDir)
-                        .waitFor();
-                    activity.runOnUiThread(new Runnable(){
-                            @Override
-                            public void run(){
-                                pd.dismiss();
-                            }
-                        });
-                }catch (Exception e) {
-                    throw new RuntimeException(e);
+                    {//uncompression data
+                        activity.runOnUiThread(new Runnable(){
+                                @Override
+                                public void run(){
+                                    p_dialog.setMessage("uncompression data....");
+                                }
+                            });
+                        uncompression_data(assetM);
+                    }
+                    
+                    {//install ndk
+                        activity.runOnUiThread(new Runnable(){
+                                @Override
+                                public void run(){
+                                    p_dialog.setMessage("ndk install ...");
+                                }
+                            });
+                        install_ndk(E_Application.getNdkUrl());
+                    }            
+                    
+                    {//update version info
+                        activity.runOnUiThread(new Runnable(){
+                                @Override
+                                public void run(){
+                                    p_dialog.dismiss();
+                                }
+                            });
+                        E_Application.updateConfigVersion(activity);                      
+                    }
                 }
+                catch(Exception e){
+                    E_Application.clearConfigVersion(activity);               
+                    throw new RuntimeException(e);
+                }            
             }
         }.start();
     }
     
-    static void download_android_jar(final Activity activity){
-
-        final ProgressDialog pd = ProgressDialog.show(activity, null, "Downlaod android.jar ...", true, false);
-
-        new Thread(){
-            public void run(){         
-
-                try{              
-                InputStream in=E_Application.getAndroidJarUrl().openStream();
-                byte[] buf=new byte[4096*4];
-                int n;
-
-                File of=new File(E_Application.getAppPrivateDir(),"android.jar");
+    static private void install_toolchain(AssetManager am) throws IOException, InterruptedException{
                
-                FileOutputStream out=new FileOutputStream(of);
+        final String binDir=E_Application.getBinDir().getAbsolutePath();
+        final String dexDir=E_Application.getDexDir().getAbsolutePath();
 
-                while((n=in.read(buf))!=-1)
-                    out.write(buf,0,n);
+        final String list[][]={
+            {"bin/arm/aapt",binDir+"/aapt"},
+            {"bin/arm/aidl",binDir+"/aidl"},
+            {"bin/arm/busybox",binDir+"/busybox"},
+            {"bin/dx.jar",dexDir+"/dx.jar"},
+            {"bin/apksigner.jar",dexDir+"/apksigner.jar"}
+        };
 
-                out.close();
-                in.close();
+        final byte[] buf=new byte[4096*4];
+        int n;             
 
-                activity.runOnUiThread(new Runnable(){
-                        @Override
-                        public void run(){
-                            pd.dismiss();
-                        }
-                    });
-                }catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        }.start();
+        for(String[] i:list){
+            InputStream in=am.open(i[0]);
+            FileOutputStream out=new FileOutputStream(i[1]);
+
+            while((n=in.read(buf))!=-1)
+                out.write(buf,0,n);
+
+            out.close();
+            in.close();         
+
+            OSUtils.chmod(i[1],0755);
+        }
+
+        if(Runtime.getRuntime().exec(binDir+"/busybox --install -s "+binDir)
+            .waitFor()!=0)
+                    throw new IOException("工具链安装失败");      
     }
     
-    static void uncompression_data(final Activity activity){
+    static private void download_android_jar(URL url) throws IOException{   
+        InputStream in=url.openStream();
+        byte[] buf=new byte[4096*4];
+        int n;
 
-    final ProgressDialog pd = ProgressDialog.show(activity, null, "unzip ...", true, false);
+        File of=new File(E_Application.getAppPrivateDir(),"android.jar");
 
-    new Thread(){
-        public void run(){         
+        FileOutputStream out=new FileOutputStream(of);
 
-        try{             
+        while((n=in.read(buf))!=-1)
+            out.write(buf,0,n);
+
+        out.close();
+        in.close();              
+    }
+    
+    static private void uncompression_data(final AssetManager am) throws IOException{       
         
         final String list[][]={
         {"test.ks",E_Application.getAppPrivateDir()+"/test.ks"},
@@ -125,80 +149,45 @@ public final class E_Installer
         int n;             
 
         for(String[] i:list){
-        InputStream in=activity.getAssets().open(i[0]);
-        FileOutputStream out=new FileOutputStream(i[1]);
+            InputStream in=am.open(i[0]);
+            FileOutputStream out=new FileOutputStream(i[1]);
+
+            while((n=in.read(buf))!=-1)
+                out.write(buf,0,n);
+
+            out.close();
+            in.close();         
+        }
+    }
+    
+    static private void install_ndk(final URL url) throws IOException, InterruptedException{
+   
+        InputStream in=url.openStream();
+        byte[] buf=new byte[4096*4];
+        int n;
+
+        File of=new File(E_Application.getTmpDir(),"tmp.tar.xz");
+        FileOutputStream out=new FileOutputStream(of);
 
         while((n=in.read(buf))!=-1)
             out.write(buf,0,n);
 
         out.close();
-        in.close();         
+        in.close();
 
-        
-        }
-        
+        String cmd=E_Application.getBinDir().getAbsolutePath()
+            +"/busybox tar -xJf "
+            +of.getAbsolutePath()
+            +" -C "
+            +E_Application.getNdkDir().getAbsolutePath();
 
-        activity.runOnUiThread(new Runnable(){
-            @Override
-            public void run(){
-            pd.dismiss();
-            }
-        });
-        }catch (Exception e) {
-        throw new RuntimeException(e);
-        }
-        }
-    }.start();
-    }
-    
-    static void install_ndk(final Activity activity,final URL url){
+        Process p= Runtime.getRuntime().exec(cmd);
+
+        final int ec= p.waitFor();
+
+        of.delete();      
         
-        final ProgressDialog pd = ProgressDialog.show(activity, null, "ndk install ...", true, false);
-        
-        new Thread(){
-            public void run(){         
-                try{                
-                    InputStream in=url.openStream();
-                    byte[] buf=new byte[4096*4];
-                    int n;
-                    
-                    File of=new File(E_Application.getTmpDir(),"tmp.tar.xz");
-                    FileOutputStream out=new FileOutputStream(of);
-                    
-                    while((n=in.read(buf))!=-1)
-                        out.write(buf,0,n);
-                    
-                    out.close();
-                    in.close();
-                    
-                    String cmd=E_Application.getBinDir().getAbsolutePath()
-                      +"/busybox tar -xJf "
-                      +of.getAbsolutePath()
-                      +" -C "
-                      +E_Application.getNdkDir().getAbsolutePath();
-                    
-                    Process p= Runtime.getRuntime().exec(cmd);
-                    
-                    final int ec= p.waitFor();
-                    
-                    of.delete();
-                    
-                    
-                    
-                activity.runOnUiThread(new Runnable(){
-                    @Override
-                    public void run(){
-                        if(ec==0)
-                    pd.dismiss();
-                    else
-                        Toast.makeText(activity,"ndk install fail !",1).show();
-                    
-                    }
-                });
-                }catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        }.start();
+        if(ec!=0)
+            throw new IOException("ndk 安装失败");
     }
 }

@@ -23,10 +23,10 @@ import java.util.BitSet;
 
 public class CodeEditor extends FreeScrollingTextField
 {
-    private String path;
-    private List<ICodeDiag.DiagInfo> errors;
+    protected String path;
+    /*private List<ICodeDiag.DiagInfo> errors;
     private List<ICodeDiag.DiagInfo> warnings;
-    
+    */
     public CodeEditor(Context context, AttributeSet attributeSet) {
         super(context, attributeSet);
         setShowLineNumbers(true);
@@ -76,6 +76,10 @@ public class CodeEditor extends FreeScrollingTextField
             moveCaret(undo);
             invalidate();
         }
+    }
+    
+    public File  getPath(){
+        return new File(path);
     }
     
     public void read(File file,Object... v) throws IOException {
@@ -334,7 +338,7 @@ public class CodeEditor extends FreeScrollingTextField
 
     private void draw_small_text(Canvas canvas,float x,float y,String text){
         canvas.drawText(text,x,y,_smallTextP);
-    }*/
+    }
     
     public void setErrors(List<ICodeDiag.DiagInfo> errs){
         errors=errs;
@@ -342,5 +346,5 @@ public class CodeEditor extends FreeScrollingTextField
 
     public void setWarnings(List<ICodeDiag.DiagInfo> wars){
         warnings=wars;
-    }
+    }*/
 }

@@ -1,0 +1,72 @@
+
+#include <asm/cache.h>
+
+.section .text
+.arm
+.syntax unified
+.align 2
+
+  @void wchar_to_jchar(wchar_t* s,jchar* d,int l);
+  
+  .global wchar_to_jchar
+  .type wchar_to_jchar %object
+  .hidden wchar_to_jchar
+  
+  wchar_to_jchar:
+
+    push {r3-r11,lr} 
+    
+    @pld [r0,#(0*L1_CACHE_BYTES)]
+    @pld [r0,#(1*L1_CACHE_BYTES)]
+    @pld [r0,#(2*L1_CACHE_BYTES)]
+    @pld [r0,#(3*L1_CACHE_BYTES)]
+    
+    mov r3,r2,lsr #2
+    
+    ldr lr,=65535
+0:
+    cmp r3,#0
+    beq 1f
+    
+    pld [r0] @L1
+    
+    ldm r0!,{r4-r11}
+    @nop
+    
+    and r4,lr
+    orr r4,r4,r5,lsl #16
+    
+    and r6,lr
+    orr r5,r6,r7,lsl #16
+    
+    and r8,lr
+    orr r6,r8,r9,lsl #16
+    
+    and r10,lr
+    orr r7,r10,r11,lsl #16
+    
+    stm r1!,{r4-r7}
+    
+    sub r3,#1
+    b 0b
+1:
+    and r3,r2,#3
+    cmp r3,#2
+    
+    ldreq r4,[r0],#0
+    ldreq r5,[r0],#4
+    
+    andeq r4,lr
+    orreq r4,r4,r5,lsl #16
+    streq r4,[r1]
+    
+    addeq r0,#8
+    addeq r1,#4
+    
+    ands r3,r2,#1
+    
+    ldreq r4,[r0]
+    andeq r4,lr
+    strhteq  r4,[r1]
+    
+    pop {r3-r11,pc}

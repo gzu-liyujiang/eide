@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Collection;
+import android.util.*;
 
 public class E_DiagnosticServer{
 
@@ -35,16 +36,23 @@ public class E_DiagnosticServer{
     }
     
     public void updateDiagnostic(IDiagnostic diag){
-        thread.up_diag(diag);
+        thread.remove_diag(diag);
+        thread.add_diag(diag);
     }
     
     public void removeDiagnostic(IDiagnostic diag){
         thread.remove_diag(diag);
     }
     
-    public boolean isDiagnosticed(){
-        return !thread.active();
+    public List<DiagnosticMessage> getWarnings(File file){
+        return thread.getWarnings(file);
     }
+    
+    public List<DiagnosticMessage> getErrors(File file){
+        return thread.getErrors(file);
+    }
+    
+    /*
     
     public Map<File,List<DiagnosticMessage>> get_warnings(){
         return convert_map(thread.warnings);
@@ -72,9 +80,10 @@ public class E_DiagnosticServer{
         }
         
         return map;
-    }
+    }*/
     
-    private class DiagnosticThread extends Thread implements DiagnosticCallback{   
+    private class DiagnosticThread extends Thread implements DiagnosticCallback
+    {
         
         private final List<IDiagnostic> undiag_stack=new ArrayList<>();
         private final Map<IDiagnostic,List<DiagnosticMessage>> warnings=new HashMap<>();
@@ -82,8 +91,15 @@ public class E_DiagnosticServer{
         
         private IDiagnostic current_diag;
         
+        private void printMsg(DiagnosticMessage msg){
+            Log.v("eide",msg.toString());
+        }
+        
         @Override
         public void onNewError(DiagnosticMessage msg){
+            
+            printMsg(msg);
+            
             List<DiagnosticMessage> message=errors.get(current_diag);
             if(message==null){
                 message=new ArrayList<DiagnosticMessage>();
@@ -98,6 +114,8 @@ public class E_DiagnosticServer{
 
         @Override
         public void onNewWarning(DiagnosticMessage msg){
+            
+            printMsg(msg);
             List<DiagnosticMessage> message=warnings.get(current_diag);
             if(message==null){
                 message=new ArrayList<DiagnosticMessage>();
@@ -112,22 +130,29 @@ public class E_DiagnosticServer{
         }
         
         @Override
-        public void onDiagnosticed()
+        public void onClearError(DiagnosticMessage msg)
         {
-        for(DiagnosticCallback cb:callbacks){
-            cb.onDiagnosticed();
-        }
-        }
-        
-        
-        public boolean active(){
-            boolean a;
-        synchronized(DiagnosticThread.this){
-            a=!undiag_stack.isEmpty();
-        }
-        return a;
+            for(DiagnosticCallback cb:callbacks){
+                cb.onClearError(msg);
+            }
         }
 
+        @Override
+        public void onClearWarning(DiagnosticMessage msg)
+        {
+            for(DiagnosticCallback cb:callbacks){
+                cb.onClearWarning(msg);
+            }
+        }
+        
+        @Override
+        public void onChanged()
+        {
+            for(DiagnosticCallback cb:callbacks){
+                cb.onChanged();
+            }
+        }
+        
         public void add_diag(IDiagnostic diag){
             synchronized(DiagnosticThread.this){
                 undiag_stack.add(diag);
@@ -146,58 +171,77 @@ public class E_DiagnosticServer{
                     }          
                 }              
                 
+                List<DiagnosticMessage> w_messages=warnings.get(diag);
+                List<DiagnosticMessage> e_messages=errors.get(diag);
+                
                 warnings.remove(diag);
                 errors.remove(diag);
+                
+                if(w_messages!=null)
+                    for(DiagnosticMessage dm:w_messages)
+                        onClearWarning(dm);
+                    
+                if(e_messages!=null)
+                    for(DiagnosticMessage dm:e_messages)
+                        onClearError(dm);
+                
             }
         }
         
-        public void up_diag(IDiagnostic diag){
+        public List<DiagnosticMessage> getErrors(File f){
+            List<DiagnosticMessage> list=new ArrayList<>();
             synchronized(DiagnosticThread.this){
+                Collection<List<DiagnosticMessage>> dml=errors.values();
                 
-                for(IDiagnostic d:undiag_stack){
-                    if(d.equals(diag)){
-                        undiag_stack.remove(d);
-                        undiag_stack.add(diag);
-                        return;
-                    }
-                }           
+                for(List<DiagnosticMessage> l:dml)
+                    for(DiagnosticMessage i:l)
+                        if(f.equals(i.file))
+                            list.add(i);
+                    
                 
-                for(IDiagnostic d:errors.keySet()){
-                    if(d.equals(diag)){
-                        errors.remove(d);
-                        return;
-                    }
-                }
-                
-                for(IDiagnostic d:warnings.keySet()){
-                    if(d.equals(diag)){
-                        errors.remove(d);
-                        return;
-                    }
-                }
-                
-                undiag_stack.add(diag);
             }
+            return list;
+        }
+        
+        public List<DiagnosticMessage> getWarnings(File f){
+            List<DiagnosticMessage> list=new ArrayList<>();
+            synchronized(DiagnosticThread.this){
+                Collection<List<DiagnosticMessage>> dml=warnings.values();
+
+                for(List<DiagnosticMessage> l:dml)
+                    for(DiagnosticMessage i:l)
+                        if(f.equals(i.file))
+                            list.add(i);
+
+
+            }
+            return list;
         }
         
         public void run(){
+            
+           
             for(;;){
-                synchronized(DiagnosticThread.this){
-                    if(undiag_stack.isEmpty()){
-                        try{Thread.sleep(200);}
-                        catch(InterruptedException e){}
-                        finally{continue;}
-                    }                   
-                        
+                
+                try{
+                    if (undiag_stack.isEmpty()){
+                        Thread.sleep(200);
+                        continue;
+                    }
+                }
+                catch (InterruptedException e){
+                    return;
+                }
+
+               synchronized(DiagnosticThread.class) {
+                                                
                     final int index=undiag_stack.size()-1;
                     current_diag=undiag_stack.get(index);         
                     current_diag.diag(this);
-                    
-                    undiag_stack.remove(index);      
-                    
-                    if(undiag_stack.isEmpty())
-                        onDiagnosticed();
+                    undiag_stack.remove(index);                   
                 }
+                
+                onChanged();
             }
         }
     }

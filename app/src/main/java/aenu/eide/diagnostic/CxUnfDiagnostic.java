@@ -24,6 +24,16 @@ public class CxUnfDiagnostic implements IDiagnostic{
     }
 
     @Override
+    public int hashCode(){
+        return __File.hashCode();
+    }
+    
+	@Override
+	public String toString(){
+		return CxDiagnostic.class+__File.toString();
+	}
+	
+    @Override
     public void diag(DiagnosticCallback callback){
         CXDiagnosticJni.diag_from_source(__File.getAbsolutePath(),__Source,__Flags,callback);
     }
