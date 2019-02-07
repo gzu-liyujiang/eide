@@ -131,7 +131,7 @@ $(llvm_lib_aarch64desc_SRC_FILES) \
 $(llvm_lib_aarch64info_SRC_FILES) \
 $(llvm_lib_aarch64utils_SRC_FILES) \
 $(llvm_lib_aarch64codegen_SRC_FILES) \
-to_string.cpp
+$(llvm_lib_aggressiveinstcombine_SRC_FILES) 
 
 LOCAL_MODULE:= LLVM-7
 
@@ -152,6 +152,7 @@ LOCAL_CFLAGS := \
   -D__STDC_LIMIT_MACROS   \
   -D__STDC_CONSTANT_MACROS    \
   -Os \
+  -fPIC \
   -marm \
   -DLLVM_BUILD_GLOBAL_ISEL \
   $(LOCAL_CFLAGS)
@@ -186,10 +187,10 @@ ifeq ($(TARGET_ARCH_ABI),armeabi)
   LOCAL_CFLAGS += -DPRIxPTR=\"x\"
 endif
 
-LOCAL_CPPFLAGS +=-frtti -fexceptions -std=c++11
+LOCAL_CPPFLAGS +=-fPIC -frtti -fexceptions -std=c++11
 
 LOCAL_LDLIBS +=-lz
 
-include $(BUILD_STATIC_LIBRARY)
+include $(BUILD_SHARED_LIBRARY)
 #TMD.. \
 include $(BUILD_EXECUTABLE)

@@ -1,0 +1,36 @@
+TBLGEN=$HOME/llvm-tblgen
+LLVM_DIR=/sdcard/aenu/eide/external/llvm-7.0.1.src
+COMMON_LLVM=/sdcard/aenu/eide/external/llvm7/common-llvm
+
+mkdir -p $COMMON_LLVM/include/llvm/Target/AArch64
+mkdir -p $COMMON_LLVM/include/llvm/Target/ARM
+
+$TBLGEN  -I$LLVM_DIR/include -I/sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/ARM -o=$COMMON_LLVM/include/llvm/Target/ARM/ARMGenAsmMatcher.inc -gen-asm-matcher /sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/ARM/ARM.td
+$TBLGEN  -I$LLVM_DIR/include -I/sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/ARM -o=$COMMON_LLVM/include/llvm/Target/ARM/ARMGenAsmWriter.inc -gen-asm-writer /sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/ARM/ARM.td
+$TBLGEN  -I$LLVM_DIR/include -I/sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/ARM -o=$COMMON_LLVM/include/llvm/Target/ARM/ARMGenCallingConv.inc -gen-callingconv /sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/ARM/ARM.td
+$TBLGEN  -I$LLVM_DIR/include -I/sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/ARM -o=$COMMON_LLVM/include/llvm/Target/ARM/ARMGenDAGISel.inc -gen-dag-isel /sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/ARM/ARM.td
+$TBLGEN  -I$LLVM_DIR/include -I/sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/ARM -o=$COMMON_LLVM/include/llvm/Target/ARM/ARMGenDisassemblerTables.inc -gen-disassembler /sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/ARM/ARM.td
+$TBLGEN  -I$LLVM_DIR/include -I/sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/ARM -o=$COMMON_LLVM/include/llvm/Target/ARM/ARMGenFastISel.inc -gen-fast-isel /sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/ARM/ARM.td
+$TBLGEN  -I$LLVM_DIR/include -I/sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/ARM -o=$COMMON_LLVM/include/llvm/Target/ARM/ARMGenGlobalISel.inc -gen-global-isel /sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/ARM/ARM.td
+$TBLGEN  -I$LLVM_DIR/include -I/sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/ARM -o=$COMMON_LLVM/include/llvm/Target/ARM/ARMGenInstrInfo.inc -gen-instr-info /sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/ARM/ARM.td
+$TBLGEN  -I$LLVM_DIR/include -I/sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/ARM -o=$COMMON_LLVM/include/llvm/Target/ARM/ARMGenMCCodeEmitter.inc -gen-emitter /sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/ARM/ARM.td
+$TBLGEN  -I$LLVM_DIR/include -I/sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/ARM -o=$COMMON_LLVM/include/llvm/Target/ARM/ARMGenMCPseudoLowering.inc -gen-pseudo-lowering /sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/ARM/ARM.td
+$TBLGEN  -I$LLVM_DIR/include -I/sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/ARM -o=$COMMON_LLVM/include/llvm/Target/ARM/ARMGenRegisterBank.inc -gen-register-bank /sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/ARM/ARM.td
+$TBLGEN  -I$LLVM_DIR/include -I/sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/ARM -o=$COMMON_LLVM/include/llvm/Target/ARM/ARMGenRegisterInfo.inc -gen-register-info /sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/ARM/ARM.td
+$TBLGEN  -I$LLVM_DIR/include -I/sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/ARM -o=$COMMON_LLVM/include/llvm/Target/ARM/ARMGenSubtargetInfo.inc -gen-subtarget /sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/ARM/ARM.td
+$TBLGEN  -I$LLVM_DIR/include -I/sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/ARM -o=$COMMON_LLVM/include/llvm/Target/ARM/ARMGenSystemRegister.inc -gen-searchable-tables /sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/ARM/ARM.td
+$TBLGEN  -I$LLVM_DIR/include -I/sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/AArch64 -o=$COMMON_LLVM/include/llvm/Target/AArch64/AArch64GenAsmMatcher.inc -gen-asm-matcher /sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/AArch64/AArch64.td
+$TBLGEN  -I$LLVM_DIR/include -I/sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/AArch64 -o=$COMMON_LLVM/include/llvm/Target/AArch64/AArch64GenAsmWriter.inc -gen-asm-writer /sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/AArch64/AArch64.td
+$TBLGEN  -I$LLVM_DIR/include -I/sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/AArch64 -o=$COMMON_LLVM/include/llvm/Target/AArch64/AArch64GenAsmWriter1.inc -gen-asm-writer -asmwriternum=1 /sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/AArch64/AArch64.td
+$TBLGEN  -I$LLVM_DIR/include -I/sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/AArch64 -o=$COMMON_LLVM/include/llvm/Target/AArch64/AArch64GenCallingConv.inc -gen-callingconv /sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/AArch64/AArch64.td
+$TBLGEN  -I$LLVM_DIR/include -I/sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/AArch64 -o=$COMMON_LLVM/include/llvm/Target/AArch64/AArch64GenDAGISel.inc -gen-dag-isel /sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/AArch64/AArch64.td
+$TBLGEN  -I$LLVM_DIR/include -I/sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/AArch64 -o=$COMMON_LLVM/include/llvm/Target/AArch64/AArch64GenDisassemblerTables.inc -gen-disassembler /sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/AArch64/AArch64.td
+$TBLGEN  -I$LLVM_DIR/include -I/sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/AArch64 -o=$COMMON_LLVM/include/llvm/Target/AArch64/AArch64GenFastISel.inc -gen-fast-isel /sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/AArch64/AArch64.td
+$TBLGEN  -I$LLVM_DIR/include -I/sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/AArch64 -o=$COMMON_LLVM/include/llvm/Target/AArch64/AArch64GenGlobalISel.inc -gen-global-isel /sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/AArch64/AArch64.td
+$TBLGEN  -I$LLVM_DIR/include -I/sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/AArch64 -o=$COMMON_LLVM/include/llvm/Target/AArch64/AArch64GenInstrInfo.inc -gen-instr-info /sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/AArch64/AArch64.td
+$TBLGEN  -I$LLVM_DIR/include -I/sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/AArch64 -o=$COMMON_LLVM/include/llvm/Target/AArch64/AArch64GenMCCodeEmitter.inc -gen-emitter /sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/AArch64/AArch64.td
+$TBLGEN  -I$LLVM_DIR/include -I/sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/AArch64 -o=$COMMON_LLVM/include/llvm/Target/AArch64/AArch64GenMCPseudoLowering.inc -gen-pseudo-lowering /sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/AArch64/AArch64.td
+$TBLGEN  -I$LLVM_DIR/include -I/sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/AArch64 -o=$COMMON_LLVM/include/llvm/Target/AArch64/AArch64GenRegisterBank.inc -gen-register-bank /sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/AArch64/AArch64.td
+$TBLGEN  -I$LLVM_DIR/include -I/sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/AArch64 -o=$COMMON_LLVM/include/llvm/Target/AArch64/AArch64GenRegisterInfo.inc -gen-register-info /sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/AArch64/AArch64.td
+$TBLGEN  -I$LLVM_DIR/include -I/sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/AArch64 -o=$COMMON_LLVM/include/llvm/Target/AArch64/AArch64GenSubtargetInfo.inc -gen-subtarget /sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/AArch64/AArch64.td
+$TBLGEN  -I$LLVM_DIR/include -I/sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/AArch64 -o=$COMMON_LLVM/include/llvm/Target/AArch64/AArch64GenSystemOperands.inc -gen-searchable-tables /sdcard/aenu/eide/external/llvm-7.0.1.src/lib/Target/AArch64/AArch64.td

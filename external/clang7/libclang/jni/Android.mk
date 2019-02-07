@@ -14,8 +14,8 @@ clang_lib_toolinginclusions_SRC_FILES:= \
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := LLVM-7
-LOCAL_SRC_FILES := libLLVM-7.a
-include $(PREBUILT_STATIC_LIBRARY)
+LOCAL_SRC_FILES := libLLVM-7.so
+include $(PREBUILT_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
 
@@ -56,12 +56,11 @@ $(clang_lib_toolinginclusions_SRC_FILES) \
   $(CLANG_ROOT_PATH)/tools/libclang/CIndexHigh.cpp \
   $(CLANG_ROOT_PATH)/tools/libclang/CXType.cpp \
   $(CLANG_ROOT_PATH)/tools/libclang/CXLoadedDiagnostic.cpp \
-  $(CLANG_ROOT_PATH)/tools/libclang/CXStoredDiagnostic.cpp \
-  to_string.cpp
+  $(CLANG_ROOT_PATH)/tools/libclang/CXStoredDiagnostic.cpp 
+  
+LOCAL_MODULE:= clang-7
 
-LOCAL_MODULE:= clang
-
-LOCAL_STATIC_LIBRARIES := LLVM-7
+LOCAL_SHARED_LIBRARIES := libLLVM-7
 
 LOCAL_C_INCLUDES := \
   $(LOCAL_PATH)/$(LLVM_ROOT_PATH)/include   \
@@ -82,6 +81,7 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH)/$(CLANG_ROOT_PATH)/lib/Basic
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/$(CLANG_ROOT_PATH)/lib/Driver
        
 LOCAL_CFLAGS := \
+  -fPIC \
   -D_GNU_SOURCE   \
   -D__STDC_LIMIT_MACROS   \
   -D__STDC_CONSTANT_MACROS    \
@@ -122,7 +122,7 @@ endif
 
 LOCAL_LDLIBS +=-lz
 
-LOCAL_CPPFLAGS +=-frtti -fexceptions -std=c++11
+LOCAL_CPPFLAGS +=-frtti -fexceptions -std=c++11 -fPIC
 include $(BUILD_SHARED_LIBRARY)
 
 # \
