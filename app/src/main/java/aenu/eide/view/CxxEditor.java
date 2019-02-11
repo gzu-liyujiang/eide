@@ -63,7 +63,7 @@ public class CxxEditor extends CodeEditor implements ICodeDiag
     }
     
     @Override
-    public void diag(String code, ICodeDiag.DiagResult dr)
+    public void diag(String code)
     {
         CxUnfDiagnostic cud=new CxUnfDiagnostic(new File(path),code,flags);
         diag_ser.updateDiagnostic(cud);   

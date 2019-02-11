@@ -66,8 +66,8 @@ public class ProjectPage extends PagerAdapter implements TreeNode.TreeNodeClickL
 
     private final void initialize(){
 
-        views.put("错误",newListView("无错误",Color.RED));
-        views.put("警告",newListView("无警告",0xffff8040));
+        views.put("错误",newListView("无错误"));
+        views.put("警告",newListView("无警告"));
         views.put("项目",
         project_dir==null?newTextView("未打开项目"):newProjectView());
     }
@@ -80,7 +80,7 @@ public class ProjectPage extends PagerAdapter implements TreeNode.TreeNodeClickL
         return v;
     }
 
-    private final View newListView(String empty_message,int message_text_color){
+    private final View newListView(String empty_message){
         final FrameLayout v=new FrameLayout(context);
         final ListView l=new ListView(context);
         final TextView e=newTextView(empty_message);
@@ -90,7 +90,7 @@ public class ProjectPage extends PagerAdapter implements TreeNode.TreeNodeClickL
         l.setId(android.R.id.list);
         l.setEmptyView(e);
         l.setOnItemClickListener(MSG_CLICK);
-        l.setAdapter(new_diag_msg_adapter(message_text_color));
+        //l.setAdapter(new_diag_msg_adapter(message_text_color));
         return v;
     }
      
@@ -304,7 +304,7 @@ public class ProjectPage extends PagerAdapter implements TreeNode.TreeNodeClickL
         return list;
     }*/
     
-    private ArrayAdapter<DiagnosticMessage> new_diag_msg_adapter(final int textColor){
+    private ArrayAdapter<DiagnosticMessage> new_diag_msg_adapter(final List<DiagnosticMessage> msg,final int textColor){
         final ArrayAdapter<DiagnosticMessage> adapter=new ArrayAdapter<DiagnosticMessage>(context,-1){
             public View getView(int position,View convertView,ViewGroup parent) {
                 TextView v=convertView!=null?(TextView)convertView:new TextView(context);
@@ -321,9 +321,23 @@ public class ProjectPage extends PagerAdapter implements TreeNode.TreeNodeClickL
                 return v;
             }          
         };
+		adapter.addAll(msg);
         return adapter;
     }
+	
+	public void setWarnings(List<DiagnosticMessage> wars){
 
+        final ListView v=(ListView)views.get("警告").findViewById(android.R.id.list);
+		v.setAdapter(new_diag_msg_adapter(wars,0xffff8040));
+	}
+
+	public void setErrors(List<DiagnosticMessage> errs){
+        final ListView v=(ListView)views.get("错误").findViewById(android.R.id.list);    
+		v.setAdapter(new_diag_msg_adapter(errs,Color.RED));
+		
+    }
+	
+	/*
     public void addError(DiagnosticMessage err){
         final ListView v=(ListView)views.get("错误").findViewById(android.R.id.list);    
         final ArrayAdapter<DiagnosticMessage> adapter=(ArrayAdapter<DiagnosticMessage>) v.getAdapter();
@@ -356,7 +370,7 @@ public class ProjectPage extends PagerAdapter implements TreeNode.TreeNodeClickL
 
         adapter.remove(war);
         adapter.notifyDataSetChanged();
-    }
+    }*/
 
     @Override
     public void onClick(TreeNode node,Object value){

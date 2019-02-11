@@ -15,8 +15,8 @@ public class CxxLanguage implements ILanguage{
         return new String[]{
         "-I/data/data/aenu.eide/eide-ndk/sysroot/usr/include"
         ,"-I/data/data/aenu.eide/eide-ndk/sysroot/usr/include/arm-linux-androideabi"
-        ,"-I/data/data/aenu.eide/eide-ndk/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-arm/lib/gcc/arm-linux-androideabi/4.9.x/include"
-        ,"-std=gnu11"
+			,"-I/data/data/aenu.eide/eide-ndk/toolchains/llvm/prebuilt/linux-arm/lib/clang/7.0.0/include"
+        ,"-std=c99"
                  };
     }
     
@@ -24,10 +24,11 @@ public class CxxLanguage implements ILanguage{
         return new String[]{
         "-I/data/data/aenu.eide/eide-ndk/sysroot/usr/include"
         ,"-I/data/data/aenu.eide/eide-ndk/sysroot/usr/include/arm-linux-androideabi"
-        ,"-I/data/data/aenu.eide/eide-ndk/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-arm/lib/gcc/arm-linux-androideabi/4.9.x/include"
-        ,"-std=g++11"
-        ,"-I/data/data/aenu.eide/eide-ndk/sources/cxx-stl/gnu-libstdc++/4.9/include"
-        
+			,"-I/data/data/aenu.eide/eide-ndk/sources/cxx-stl/llvm-libc++/include"
+			
+			,"-I/data/data/aenu.eide/eide-ndk/toolchains/llvm/prebuilt/linux-arm/lib/clang/7.0.0/include"
+			,"-std=c++11"
+			
         };
     }
     

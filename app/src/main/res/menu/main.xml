@@ -13,5 +13,6 @@
         <item android:id="@+id/menu_compile" android:title="编译项目" />
         <item android:id="@+id/menu_file_browser" android:title="文件浏览"/>
         <item android:id="@+id/menu_open_term" android:title="打开终端"/>
+		<item android:id="@+id/menu_donate" android:title="资助作者"/>
     </group>
 </menu>

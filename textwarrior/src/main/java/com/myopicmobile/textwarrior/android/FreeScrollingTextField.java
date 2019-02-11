@@ -323,6 +323,11 @@ implements Document.TextFieldMetrics{
         _diag=cd;
     }
     
+	public final ICodeDiag getCodeDiag(){
+        return this._diag;
+    }
+    
+	
     private void initView(Context context,TypedArray ta){
         
         _fieldController = this.new TextFieldController();
@@ -366,8 +371,7 @@ implements Document.TextFieldMetrics{
             {
                 _caretSpan.setFirst(_caretSpan.getFirst()+1);
                 _autoComplete.cancel();
-                if(_diag!=null) _diag.diag(_hDoc.toString());
-            }
+                            }
 
 
             @Override
@@ -375,7 +379,8 @@ implements Document.TextFieldMetrics{
             {
                 if(delCount<=_caretSpan.getFirst())
                     _caretSpan.setFirst(_caretSpan.getFirst()-1);
-                           
+				if(_diag!=null) _diag.diag(_hDoc.toString());
+				
                 _autoComplete.cancel();
             }
 
@@ -397,6 +402,8 @@ implements Document.TextFieldMetrics{
                 else
                     _autoCompletePanel.dismiss();*/
                 _autoComplete.complete(_hDoc,caretPosition);
+				if(_diag!=null) _diag.diag(_hDoc.toString());
+				
             }
         };
         resetView();
@@ -740,7 +747,35 @@ implements Document.TextFieldMetrics{
 
 
         final int rowH=rowHeight();
-        
+		int lineY=(beginPaintRow+1)*rowH;
+		boolean line_draw_hint=false;
+		
+        List<ICodeDiag.DiagInfo> errs=null;
+        List<ICodeDiag.DiagInfo> wars=null;
+        BitSet errSet=null;
+        BitSet warSet=null;
+        BitSet errSkip=null;
+        BitSet warSkip=null;
+
+
+        {
+            errs=_diag==null?null:_diag.errors;
+            wars=_diag==null?null:_diag.warnings;
+            final int err_count=errs==null?0:errs.size();
+            final int war_count=wars==null?0:wars.size();
+
+            if(err_count!=0){
+                errSet=new BitSet(err_count);
+                errSkip=new BitSet(err_count);           
+            }
+
+            if(war_count!=0){
+                warSet=new BitSet(war_count);
+                warSkip=new BitSet(war_count);  
+            }
+
+        }
+		
 		while (paintY <= endY && _hDoc.hasNext()){
 
 			if (currRowNum > rowCount) {
@@ -774,18 +809,73 @@ implements Document.TextFieldMetrics{
 				_caretSpan=currSpan;
 			}
 			char c = _hDoc.next();
-            
+			
+            int lineX=paintX;
+			
             if (_fieldController.inSelectionRange(currentIndex)){
 				paintX += drawSelectedText(canvas, c, paintX, paintY);
 			}
 			else{
 				paintX += drawChar(canvas, c, paintX, paintY);
 			}
-            
+			int lineX2=paintX;
+
+            {
+                if(errs!=null)
+                    for(int i=0;i<errs.size();i++){
+
+                        if(errSkip.get(i)) continue;
+                        ICodeDiag.DiagInfo p=errs.get(i);
+                        if(p.start_position<=currentIndex&&p.end_position>=currentIndex){
+                            draw_line(canvas,lineX,lineX2,lineY,Color.RED);
+                            if(!errSet.get(i)){
+                                draw_small_text(canvas,lineX,lineY+smallTextSize,p.message);
+                                errSet.set(i);
+                            }
+
+                            if(p.end_position==currentIndex)
+                                errSkip.set(i);
+
+                            line_draw_hint=true;
+                            break;
+                        }
+                    }
+            }
+
+            {
+                if(wars!=null)
+                    for(int i=0;i<wars.size();i++){
+                        if(warSkip.get(i)) continue;
+
+                        ICodeDiag.DiagInfo p=wars.get(i);
+                        if(p.start_position<=currentIndex&&p.end_position>=currentIndex){
+                            draw_line(canvas,lineX,lineX2,lineY,Color.RED);
+                            if(!warSet.get(i)){
+                                draw_small_text(canvas,lineX,lineY+smallTextSize,p.message);
+                                warSet.set(i);
+                            }
+
+                            if(p.end_position==currentIndex)
+                                warSkip.set(i); 
+                            line_draw_hint=true;
+
+                            break;
+                        }
+                    }
+            }      
+			
 			++currentIndex;
 			if (c == ILanguage.NEWLINE){
+				
 				paintY += rowH;
-                
+                lineY += rowH;
+
+                if(line_draw_hint){
+                    paintY+=smallTextSize;
+                    lineY+=smallTextSize;
+                    line_draw_hint=false;
+                }
+				
 				if (paintX >= _xExtent){
 					_xExtent = paintX;
 				}
@@ -796,7 +886,28 @@ implements Document.TextFieldMetrics{
 		
 		doOptionHighlightRow(canvas);
 	}
+	
+	private final Paint _lineP=new Paint();{
+        _lineP.setStrokeWidth(4);
+    }
 
+    private void draw_line(Canvas canvas,float x,float x_end,float Y,int color){
+        _lineP.setColor(color);
+        canvas.drawLine(x,Y,x_end,Y,_lineP);
+    }
+
+	private final int smallTextSize=24;
+	
+    private final Paint _smallTextP=new Paint();{
+        _smallTextP.setTextSize(smallTextSize);
+        _smallTextP.setAntiAlias(true);
+        _smallTextP.setColor(Color.RED);
+    }
+
+    private void draw_small_text(Canvas canvas,float x,float y,String text){
+        canvas.drawText(text,x,y,_smallTextP);
+    }
+    
 	/**
 	 * Underline the caret row if the option for highlighting it is set
 	 */

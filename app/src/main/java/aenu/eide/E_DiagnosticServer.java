@@ -12,8 +12,11 @@ import android.util.*;
 
 public class E_DiagnosticServer{
 
+	public static interface Callback{
+		public void onChanged();
+	}
     private final DiagnosticThread thread=new DiagnosticThread();
-    private final List<DiagnosticCallback> callbacks=new ArrayList<>();
+    private final List<Callback> callbacks=new ArrayList<>();
     
     public void start(){
         thread.start();
@@ -23,11 +26,11 @@ public class E_DiagnosticServer{
         thread.interrupt();
     }
     
-    public void addCallback(DiagnosticCallback CB){
+    public void addCallback(Callback CB){
         callbacks.add(CB);
     }
     
-    public void removeCallback(DiagnosticCallback CB){
+    public void removeCallback(Callback CB){
         callbacks.remove(CB);
     }
     
@@ -44,6 +47,14 @@ public class E_DiagnosticServer{
         thread.remove_diag(diag);
     }
     
+	public List<DiagnosticMessage> getAllWarnings(){
+        return thread.getAllWarnings();
+    }
+
+    public List<DiagnosticMessage> getAllErrors(){
+        return thread.getAllErrors();
+    }
+	
     public List<DiagnosticMessage> getWarnings(File file){
         return thread.getWarnings(file);
     }
@@ -107,9 +118,6 @@ public class E_DiagnosticServer{
             }
         
             message.add(msg);
-            for(DiagnosticCallback cb:callbacks){
-                cb.onNewError(msg);
-            }
         }
 
         @Override
@@ -124,33 +132,6 @@ public class E_DiagnosticServer{
             }
         
             message.add(msg);
-            for(DiagnosticCallback cb:callbacks){
-                cb.onNewWarning(msg);
-            }
-        }
-        
-        @Override
-        public void onClearError(DiagnosticMessage msg)
-        {
-            for(DiagnosticCallback cb:callbacks){
-                cb.onClearError(msg);
-            }
-        }
-
-        @Override
-        public void onClearWarning(DiagnosticMessage msg)
-        {
-            for(DiagnosticCallback cb:callbacks){
-                cb.onClearWarning(msg);
-            }
-        }
-        
-        @Override
-        public void onChanged()
-        {
-            for(DiagnosticCallback cb:callbacks){
-                cb.onChanged();
-            }
         }
         
         public void add_diag(IDiagnostic diag){
@@ -177,15 +158,43 @@ public class E_DiagnosticServer{
                 warnings.remove(diag);
                 errors.remove(diag);
                 
-                if(w_messages!=null)
+                /*if(w_messages!=null)
                     for(DiagnosticMessage dm:w_messages)
                         onClearWarning(dm);
                     
                 if(e_messages!=null)
                     for(DiagnosticMessage dm:e_messages)
-                        onClearError(dm);
+					
+                        onClearError(dm);*/
                 
             }
+        }
+		
+		public List<DiagnosticMessage> getAllErrors(){
+            List<DiagnosticMessage> list=new ArrayList<>();
+            synchronized(DiagnosticThread.this){
+                Collection<List<DiagnosticMessage>> dml=errors.values();
+
+                for(List<DiagnosticMessage> l:dml)
+                    list.addAll(l);
+
+
+            }
+            return list;
+        }
+
+        public List<DiagnosticMessage> getAllWarnings(){
+            List<DiagnosticMessage> list=new ArrayList<>();
+            synchronized(DiagnosticThread.this){
+                Collection<List<DiagnosticMessage>> dml=warnings.values();
+
+                for(List<DiagnosticMessage> l:dml)
+                    list.addAll(l);
+				
+
+
+            }
+            return list;
         }
         
         public List<DiagnosticMessage> getErrors(File f){
@@ -233,7 +242,7 @@ public class E_DiagnosticServer{
                     return;
                 }
 
-               synchronized(DiagnosticThread.class) {
+               synchronized(DiagnosticThread.this) {
                                                 
                     final int index=undiag_stack.size()-1;
                     current_diag=undiag_stack.get(index);         
@@ -241,7 +250,10 @@ public class E_DiagnosticServer{
                     undiag_stack.remove(index);                   
                 }
                 
-                onChanged();
+				for(Callback cb:callbacks){
+					cb.onChanged();
+				}
+				
             }
         }
     }

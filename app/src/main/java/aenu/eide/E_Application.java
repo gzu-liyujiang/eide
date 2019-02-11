@@ -1,10 +1,8 @@
 
 //license wtfpl 2.0
 
-//by aenu
+//by aenu 2018-2019
 //   email:202983447@qq.com
-//   2018/10/22
-//   2018/11/22
 
 package aenu.eide;
 import android.app.Application;
@@ -22,6 +20,7 @@ import android.preference.PreferenceManager;
 import android.content.SharedPreferences;
 import java.net.URL;
 import java.net.MalformedURLException;
+import android.net.*;
 
 public class E_Application extends Application
 {
@@ -105,6 +104,10 @@ public class E_Application extends Application
         return new URL("file:///sdcard/aenu/eide-extra/android.jar");   
         //return new URL("https://github.com/aenu/eide-extra/blob/0.1/android.jar?raw=true");
     }
+	
+	public static final Uri getAlipayDonateUri(){
+		return Uri.parse("alipays://platformapi/startapp?saId=10000007&clientVersion=3.7.0.0718&qrcode=https%3A%2F%2Fqr.alipay.com%2FFKX01086YZLWGY2BBVP962%3F_s%3Dweb-other");
+	}
     
     @Override
     public void onCreate(){

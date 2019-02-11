@@ -117,7 +117,7 @@ cxx_complete(JNIEnv* env,jobject self,jstring source,jint pos,jint replacePos,js
             {"#include",0},
             {"#program",0},
             {"#error",0},
-            {"#undef",0}
+            {"#undef",0},
             //
             {"__attribute__((",0},
             //

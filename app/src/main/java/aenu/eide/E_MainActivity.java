@@ -46,6 +46,8 @@ import com.myopicmobile.textwarrior.android.ICodeDiag;
 import aenu.eide.diagnostic.JavaDiagnostic;
 import aenu.eide.diagnostic.CxDiagnostic;
 import android.app.*;
+import android.content.*;
+import android.net.*;
 
 public class E_MainActivity extends AppCompatActivity implements RequestListener
 {
@@ -65,21 +67,31 @@ public class E_MainActivity extends AppCompatActivity implements RequestListener
     private DrawerLayout drawer;
     private ViewPager pager;
     
-    private final DiagnosticCallback diag_cb=new DiagnosticCallback(){
+    private final E_DiagnosticServer.Callback diag_cb=new E_DiagnosticServer.Callback(){
         @Override
         public void onChanged(){
             runOnUiThread(new Runnable(){
                     @Override
                     public void run(){
                         CodeEditor editor=getCurrentEditor();
-                        if(editor!=null){
-                            editor._diag_result.warnings=convert_info(diagnostic_server.getWarnings(editor.getPath()));
-                            editor._diag_result.errors=convert_info(diagnostic_server.getErrors(editor.getPath()));                 
+						ICodeDiag diag=editor!=null?editor.getCodeDiag():null;
+						
+						project_view.setWarnings(diagnostic_server.getAllWarnings());
+						project_view.setErrors(diagnostic_server.getAllErrors());
+						
+                        if(diag!=null){
+							
+							List<DiagnosticMessage> warnings= diagnostic_server.getWarnings(editor.getPath());
+							List<DiagnosticMessage> errors= diagnostic_server.getErrors(editor.getPath());
+							
+                            diag.warnings=convert_info(warnings);
+                            diag.errors=convert_info(errors);                 
                         }
+						
                     }
                 });
         }
-
+/*
 
         @Override
         public void onClearError(final DiagnosticMessage msg){
@@ -119,7 +131,7 @@ public class E_MainActivity extends AppCompatActivity implements RequestListener
                         project_view.addWarning(msg);
                     }
                 });
-        }
+        }*/
     };
     
     @Override
@@ -229,6 +241,18 @@ public class E_MainActivity extends AppCompatActivity implements RequestListener
             case R.id.menu_redo:
                 codeRedo();
                 break;
+			case R.id.menu_donate:
+				
+				{
+					try{
+						Intent intent=new Intent(Intent.ACTION_VIEW);
+						intent.setData(E_Application.getAlipayDonateUri());
+						startActivity(intent);
+					}catch(Exception e){
+						Toast.makeText(this,"需要安装支付宝 >> "+e,1).show();
+					}
+				}
+				break;
             default: break;
         }
     }
@@ -399,11 +423,12 @@ public class E_MainActivity extends AppCompatActivity implements RequestListener
                     if(editor!=null){
                         setCurrentEditor(editor);
                         editor.read((File)data,args);
-                        editor._diag_result.warnings=
-                                convert_info(diagnostic_server.getWarnings((File)data));
-                        editor._diag_result.errors=
-                                convert_info(diagnostic_server.getErrors((File)data));               
-                    }
+                        ICodeDiag diag=editor!=null?editor.getCodeDiag():null;
+                        if(diag!=null){
+                            diag.warnings=convert_info(diagnostic_server.getWarnings(editor.getPath()));
+                            diag.errors=convert_info(diagnostic_server.getErrors(editor.getPath()));                 
+                        }        
+					}
                 }catch(IOException e){
                 }
             }break;

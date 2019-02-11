@@ -18,5 +18,7 @@ public interface ICodeDiag{
         }
     }
     
-    public void diag(String code);   
+    public void diag(String code);  
+	public List<ICodeDiag.DiagInfo> errors;
+	public List<ICodeDiag.DiagInfo> warnings;
 }
