@@ -85,7 +85,9 @@ public class E_MainActivity extends AppCompatActivity implements RequestListener
 							List<DiagnosticMessage> errors= diagnostic_server.getErrors(editor.getPath());
 							
                             diag.warnings=convert_info(warnings);
-                            diag.errors=convert_info(errors);                 
+                            diag.errors=convert_info(errors);     
+							
+							editor.invalidate();
                         }
 						
                     }
