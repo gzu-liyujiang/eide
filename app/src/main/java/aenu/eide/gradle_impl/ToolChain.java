@@ -49,36 +49,35 @@ public final class ToolChain{
             
         return new DexClassLoader(jar.getAbsolutePath(),jar_optimizedDirectory.getAbsolutePath(),null,context.getClassLoader());
     }
+	
+	private static final void RUN_JAR(DexClassLoader dcl,String mainClassName,String args) throws IOException, IllegalArgumentException, InvocationTargetException, IllegalAccessException, SecurityException, NoSuchMethodException, ClassNotFoundException 	{
+		final Class Main=dcl.loadClass(mainClassName);
+        final Method main=Main.getMethod("main",String[].class);
+		
+        final ParcelFileDescriptor[] pfds=ParcelFileDescriptor.createPipe();
+
+		final InputStream pipeIn= new
+			ParcelFileDescriptor.AutoCloseInputStream(pfds[0]);
+		final OutputStream pipeOut= new
+			ParcelFileDescriptor.AutoCloseOutputStream(pfds[1]);
+
+		int pid;
+		if((pid=OSUtils.fork())==0){
+			
+			pipeIn.close();
+			System.setErr(new PrintStream(pipeOut));             
+			main.invoke(Main,new Object[]{args.split(" ")});
+			System.exit(0);
+		}
+		else{              
+			pipeOut.close();   		
+			
+			if(TermExec.waitFor(pid)!=0)
+				throw new RuntimeException(IOUtils.stream_read(pipeIn));		
+		}		
+	}
     
-    public boolean run_ecj(File android_jar,File class_out_dir,File... src_dirs){
-        
-        StringBuilder cmds=new StringBuilder();
-        
-        cmds.append("-bootclasspath");
-        cmds.append(" ");
-        cmds.append(android_jar.getAbsoluteFile());
-        cmds.append(" ");
-        cmds.append("-source");
-        cmds.append(" ");
-        cmds.append("1.7");
-        cmds.append(" ");
-        cmds.append("-target");
-        cmds.append(" ");
-        cmds.append("1.7");
-        cmds.append(" ");
-        cmds.append("-d");
-        cmds.append(" ");
-        cmds.append(class_out_dir.getAbsolutePath());
-        cmds.append(" ");
-        
-        for(int i=0;i<src_dirs.length;i++){
-            cmds.append(src_dirs[i].getAbsolutePath());
-            if(i!=src_dirs.length-1)cmds.append(" ");
-        }
-        
-        if(!class_out_dir.exists())
-            class_out_dir.mkdirs();
-        Log.i("eide",cmds.toString());
+    public boolean run_ecj(String args){
         
         ByteArrayOutputStream err=new ByteArrayOutputStream();
         ByteArrayOutputStream out=new ByteArrayOutputStream();
@@ -86,220 +85,34 @@ public final class ToolChain{
         PrintWriter errPW=new PrintWriter(err);
         PrintWriter outPW=new PrintWriter(out);
         
-        boolean r= BatchCompiler.compile(cmds.toString(),outPW,errPW,null);
+        boolean r= BatchCompiler.compile(args.toString(),outPW,errPW,null);
         
         outPW.close();
         errPW.close();
         
         if(!r){       
-            //Log.w("eide","err:"+err.toString());
-            //Log.w("eide","out:"+out.toString());
-            
             throw new RuntimeException(err.toString());
         }
         
         return true;
     }
     
-    public boolean run_aapt_gen_r(File r_dir,File resDir,File android_jar,File AndroidManifest_xml) throws IOException, InterruptedException{
-        StringBuilder cmds=new StringBuilder();
-        cmds.append(AAPT.getAbsolutePath());
-        cmds.append(" ");
-        cmds.append("package");
-        cmds.append(" ");
-        cmds.append("-m");
-        cmds.append(" ");
-        cmds.append("-J");
-        cmds.append(" ");
-        cmds.append(r_dir.getAbsolutePath());
-        cmds.append(" ");
-        cmds.append("-S");
-        cmds.append(" ");
-        cmds.append(resDir.getAbsolutePath());
-        cmds.append(" ");
-        cmds.append("-I");
-        cmds.append(" ");
-        cmds.append(android_jar.getAbsolutePath());
-        cmds.append(" ");
-        cmds.append("-M");
-        cmds.append(" ");
-        cmds.append(AndroidManifest_xml.getAbsolutePath());
+    public boolean run_aapt(String args) throws IOException, InterruptedException{
         
-        //Log.i("eide",cmds.toString());
-        if(!r_dir.exists())
-            r_dir.mkdirs();
-        
-        Process p=Runtime.getRuntime().exec(cmds.toString());
+		final String command=AAPT.getAbsolutePath()+" "+args;
+        Process p=Runtime.getRuntime().exec(command);
         if(p.waitFor()!=0)
             throw new IOException(IOUtils.stream_read(p.getErrorStream()));
         return true;
     }
+	
+	public boolean run_dx(String args) throws SecurityException, IOException, NoSuchMethodException, IllegalAccessException, IllegalArgumentException, ClassNotFoundException, InvocationTargetException {	
+		RUN_JAR(DX,"____.com.android.dx.command.Main",args);
+		return true;
+	}
     
-    public boolean run_aapt_pack(File assets_dir,File resDir,File android_jar,File AndroidManifest_xml,File out_file) throws IOException, InterruptedException{   
-        StringBuilder cmds=new StringBuilder();
-        cmds.append(AAPT.getAbsolutePath());
-        cmds.append(" ");
-        cmds.append("package");
-        cmds.append(" ");
-        cmds.append("-f");
-        cmds.append(" ");
-        cmds.append("-A");
-        cmds.append(" ");
-        cmds.append(assets_dir.getAbsolutePath());
-        cmds.append(" ");
-        cmds.append("-S");
-        cmds.append(" ");
-        cmds.append(resDir.getAbsolutePath());
-        cmds.append(" ");
-        cmds.append("-I");
-        cmds.append(" ");
-        cmds.append(android_jar.getAbsolutePath());
-        cmds.append(" ");
-        cmds.append("-M");
-        cmds.append(" ");
-        cmds.append(AndroidManifest_xml.getAbsolutePath());
-        cmds.append(" ");
-        cmds.append("-F");
-        cmds.append(" ");
-        cmds.append(out_file.getAbsolutePath());
-        
-        if(!out_file.getParentFile().exists())
-            out_file.getParentFile().mkdirs();
-        
-        Process p=Runtime.getRuntime().exec(cmds.toString());
-        if(p.waitFor()!=0)
-            throw new IOException(IOUtils.stream_read(p.getErrorStream()));
-        return true;
-    }
-    
-    public boolean run_dx_jars(File jars_dir,File out_dir) throws ClassNotFoundException, NoSuchMethodException, SecurityException, InvocationTargetException, IllegalAccessException, IllegalArgumentException, IOException{
-        
-        Class Main=DX.loadClass("____.com.android.dx.command.Main");
-        Method main=Main.getMethod("main",String[].class);
-        
-        if(!out_dir.exists())
-            out_dir.mkdirs();
-        
-        File[] jars=jars_dir.listFiles();
-        
-        for(File jar:jars){
-            String dexName=jar.getName();
-            dexName=dexName.substring(0,dexName.length()-4)+".dex";
-            
-            File out_dex=new File(out_dir,dexName);
-            
-            ParcelFileDescriptor[] pfds=ParcelFileDescriptor.createPipe();
-           
-            InputStream pipeIn= new
-              ParcelFileDescriptor.AutoCloseInputStream(pfds[0]);
-            OutputStream pipeOut= new
-              ParcelFileDescriptor.AutoCloseOutputStream(pfds[1]);
-            
-            int pid;
-            if((pid=OSUtils.fork())==0){
-                
-                pipeIn.close();
-
-                System.setErr(new PrintStream(pipeOut));             
-                
-                main.invoke(Main,new Object[]{new String[]{
-                  "--dex",
-                  "--output="+out_dex.getAbsolutePath(),
-                  jar.getAbsolutePath()
-                }});
-                
-                System.exit(0);
-            }
-            else{              
-                pipeOut.close();         
-
-                if(TermExec.waitFor(pid)!=0)
-                    throw new RuntimeException(IOUtils.stream_read(pipeIn));
-            }
-        }
-        
-        return true;
-    }
-    
-    public boolean run_dx_classes(File classes_dir,File out_file) throws ClassNotFoundException, NoSuchMethodException, SecurityException, InvocationTargetException, IllegalAccessException, IllegalArgumentException, IOException{
-
-        Class Main=DX.loadClass("____.com.android.dx.command.Main");
-        Method main=Main.getMethod("main",String[].class);
-       
-        if(!out_file.getParentFile().exists())
-            out_file.getParentFile().mkdirs();
-        
-        ParcelFileDescriptor[] pfds=ParcelFileDescriptor.createPipe();
-        
-        InputStream pipeIn= new
-          ParcelFileDescriptor.AutoCloseInputStream(pfds[0]);
-        OutputStream pipeOut= new
-          ParcelFileDescriptor.AutoCloseOutputStream(pfds[1]);
-        
-        int pid;
-        
-        if((pid=OSUtils.fork())==0){
-            
-            pipeIn.close();
-            
-            System.setErr(new PrintStream(pipeOut));             
-            
-            main.invoke(Main,new Object[]{new String[]{
-              "--dex",
-              "--output="+out_file.getAbsolutePath(),
-              classes_dir.getAbsolutePath()
-            }});
-            
-            System.exit(0);
-        }
-        else{
-            pipeOut.close();         
-
-            if(TermExec.waitFor(pid)!=0)
-                throw new RuntimeException(IOUtils.stream_read(pipeIn));
-        }
-        return true;
-    }
-    
-    public boolean run_apksigner(File inApk,File outApk,File ks,String pass) throws ClassNotFoundException, SecurityException, NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, RuntimeException, IOException{
-        Class ApkSignerTool=APKSIGNER.loadClass("com.android.apksigner.ApkSignerTool");
-        Method main=ApkSignerTool.getMethod("main",String[].class);
-       
-        if(!outApk.getParentFile().exists())
-            outApk.getParentFile().mkdirs();
-
-        ParcelFileDescriptor[] pfds=ParcelFileDescriptor.createPipe();
-        
-        InputStream pipeIn= new
-          ParcelFileDescriptor.AutoCloseInputStream(pfds[0]);
-        OutputStream pipeOut= new
-          ParcelFileDescriptor.AutoCloseOutputStream(pfds[1]);
-        
-        int pid;
-
-        if((pid=OSUtils.fork())==0){
-            
-            pipeIn.close();
-            
-            System.setErr(new PrintStream(pipeOut));             
-            
-            main.invoke(ApkSignerTool,new Object[]{new String[]{
-              "sign",
-              "--ks",ks.getAbsolutePath(),
-              "--ks-pass","pass:"+pass,
-              "--out", outApk.getAbsolutePath(),
-              inApk.getAbsolutePath()
-            }});
-
-            System.exit(0);
-        }
-        else{
-            
-            pipeOut.close();         
-                
-            if(TermExec.waitFor(pid)!=0)
-                throw new RuntimeException(IOUtils.stream_read(pipeIn));
-        }
-        return true;
+    public boolean run_apksigner(String args) throws SecurityException, IOException, NoSuchMethodException, IllegalAccessException, IllegalArgumentException, ClassNotFoundException, InvocationTargetException {
+		RUN_JAR(APKSIGNER,"com.android.apksigner.ApkSignerTool",args);
+		return true;
     }
 }

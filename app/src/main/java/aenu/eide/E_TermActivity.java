@@ -72,8 +72,9 @@ public class E_TermActivity extends AppCompatActivity{
             }
             
         }catch (Exception e) {
-            showException(e);
-            return;
+			throw new RuntimeException(e);
+            //showException(e);
+            //return;
         }
         
         setSupportActionBar((Toolbar)findViewById(R.id.toolbar));

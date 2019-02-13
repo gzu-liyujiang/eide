@@ -1,3 +1,5 @@
 */build/
 */src/main/jniLibs/
 */src/main/obj/
+external/cfe-7.0.1.src/
+external/llvm-7.0.1.src/

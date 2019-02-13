@@ -21,6 +21,8 @@ import aenu.eide.E_TermActivity;
 import aenu.eide.E_Application;
 import java.io.FileOutputStream;
 import aenu.eide.util.OSUtils;
+import aenu.eide.gradle_impl.ToolChainHelper;
+import java.io.FileFilter;
 
 public final class eide_java_application implements IPlugin{
     private String mainClassName="example.Main";
@@ -61,42 +63,68 @@ public final class eide_java_application implements IPlugin{
             public void run(){
                 
                 ToolChain tc=gp.tool_chain;
-                File build_gradle=gp.build_gradle;
-                
+                final File p_dir=gp.getProjectDir();
+				
                 if(mainClassName==null)
                     throw new RuntimeException("unspecified main class!!");
                     
                 try{
                     {//run ecj
 
-                        File android_jar=new File("/sdcard/.aide/android.jar");//FIXME
-                        File class_out_dir=new File(build_gradle.getParentFile(),"build/bin/class");
-                        File src_dir=new File(build_gradle.getParentFile(),"src/main/java");
-
-                        if(!tc.run_ecj(android_jar,class_out_dir,src_dir))
+                        File android_jar=new File(E_Application.getAppPrivateDir(),"android.jar");
+                        File class_out_dir=new File(p_dir,"build/bin/class");
+                        File src_dir=new File(p_dir,"src/main/java");
+						
+						final String ecj_args=ToolChainHelper.generate_ecj_args(android_jar,class_out_dir,src_dir);
+						
+                        if(!tc.run_ecj(ecj_args))
                             throw new RuntimeException("run ecj failed!");
                     }
 
                     {//run dx
-                        File classes_dir=new File(build_gradle.getParentFile(),"build/bin/class");
-                        File jar_dir=new File(build_gradle.getParentFile(),"libs");
-                        File jar_dex_dir=new File(build_gradle.getParentFile(),"build/bin/jar_dex");
-                        File classes_dex=new File(build_gradle.getParentFile(),"build/bin/classes.dex");
+                        File classes_dir=new File(p_dir,"build/bin/class");
+                        File jars_dir=new File(p_dir,"libs");
+                        File jars_dex_dir=new File(p_dir,"build/bin/jar_dex");
+                        File classes_dex=new File(p_dir,"build/bin/classes.dex");
 
-                        if(jar_dir.exists())
-                            if(!tc.run_dx_jars(jar_dir,jar_dex_dir))
-                                throw new RuntimeException("dx jars!!!!");
-                        if(!tc.run_dx_classes(classes_dir,classes_dex))
+						jars_dex_dir.mkdirs();
+						classes_dex.getParentFile().mkdirs();
+
+						File[] jars=null;
+
+						if(jars_dir!=null)
+							jars = jars_dir.listFiles(new FileFilter(){
+									@Override
+									public boolean accept(File p1){
+										if(p1.isDirectory()) return false;
+										return p1.getName().endsWith(".jar");
+									}
+								});
+
+						if(jars!=null&&jars.length!=0){
+							for(File jar:jars){
+								final File out_dex=new File(jars_dex_dir,jar.getName().replace(".jar",".dex"));			
+								final String dx_jar_args=ToolChainHelper.generate_dx_jar_args(jar,out_dex);
+
+								if(!tc.run_dx(dx_jar_args))
+									throw new IOException("dx jars!!!!");							
+							}
+						}
+
+						final String dx_classes_args=ToolChainHelper.generate_dx_classes_args(classes_dir,classes_dex);
+
+						if(!tc.run_dx(dx_classes_args))
                             throw new IOException("dx classes!!!!");
                     }
+                    
                     
                     {//create jar(dex)
                         ByteArrayOutputStream jar_buf=new ByteArrayOutputStream();
                         ZipOutputStream jar_strm=new ZipOutputStream(jar_buf);    
 
-                        File resourcesDir=new File(build_gradle.getParentFile(),"src/main/resources");
-                        File classes_dex=new File(build_gradle.getParentFile(),"build/bin/classes.dex");
-                        File output_jar=new File(build_gradle.getParentFile(),"build/bin/o.jar");
+                        File resourcesDir=new File(p_dir,"src/main/resources");
+                        File classes_dex=new File(p_dir,"build/bin/classes.dex");
+                        File output_jar=new File(p_dir,"build/bin/o.jar");
 
                         if(resourcesDir.exists()){
                             IOUtils.zip_compressD(resourcesDir,jar_strm,null);
@@ -110,7 +138,7 @@ public final class eide_java_application implements IPlugin{
                     
                     {//run jar
                         Intent intent = new Intent(E_TermActivity.ACTION_JAVA_TERM_EXEC);
-                        File jar=new File(build_gradle.getParentFile(),"build/bin/o.jar");
+                        File jar=new File(p_dir,"build/bin/o.jar");
                         intent.putExtra(E_TermActivity.EXTRA_BIN,jar.getAbsolutePath());
                         intent.putExtra(E_TermActivity.EXTRA_JAVA_MAIN_CLASS,mainClassName);
                         gp.context.startActivity(intent);    

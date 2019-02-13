@@ -1,7 +1,7 @@
 
 //license wtfpl 2.0
 
-//by aenu 2018-2019
+//by aenu 2018,2019
 //   email:202983447@qq.com
 
 package aenu.eide;
@@ -21,6 +21,8 @@ import android.content.SharedPreferences;
 import java.net.URL;
 import java.net.MalformedURLException;
 import android.net.*;
+import android.content.Intent;
+import android.app.ActivityManager;
 
 public class E_Application extends Application
 {
@@ -66,6 +68,11 @@ public class E_Application extends Application
     static final String getAppVersion(){
         return "0.1";
     }
+	
+	public static final String getAppPackageName(){
+        return "aenu.eide";
+    }
+    
     
     public static final File getTmpDir(){
         return new File("/data/data/aenu.eide/eide-tmp");
@@ -96,13 +103,13 @@ public class E_Application extends Application
     }
     
     public static final URL getNdkUrl() throws MalformedURLException{
-        return new URL("file:///sdcard/aenu/eide-extra/ndk.tar.xz");
-        //return new URL("https://github.com/aenu/eide-extra/blob/0.1/ndk.tar.xz?raw=true");
+        //return new URL("file:///sdcard/AppProjects/eide-extra/ndk.tar.xz");
+        return new URL("https://github.com/aenu/eide-extra/blob/0.1/ndk.tar.xz?raw=true");
     }
     
     public static final URL getAndroidJarUrl() throws MalformedURLException{
-        return new URL("file:///sdcard/aenu/eide-extra/android.jar");   
-        //return new URL("https://github.com/aenu/eide-extra/blob/0.1/android.jar?raw=true");
+        //return new URL("file:///sdcard/AppProjects/eide-extra/android.jar");   
+        return new URL("https://github.com/aenu/eide-extra/blob/0.1/android.jar?raw=true");
     }
 	
 	public static final Uri getAlipayDonateUri(){
@@ -112,9 +119,11 @@ public class E_Application extends Application
     @Override
     public void onCreate(){
         super.onCreate();    
+		if(OSUtils.getProcessName(this,android.os.Process.myPid())
+			.equals(E_ErrorActivity.PROCESS_NANE)) return;
+			
         Thread.setDefaultUncaughtExceptionHandler(H);
         initDir();
-        //Runtime.getRuntime().addShutdownHook(Clean);
     }
 
     private final void initDir(){
@@ -166,13 +175,6 @@ public class E_Application extends Application
         }
     }
     
-    private static final Thread Clean=new Thread(){
-        public void run(){
-            File tmp=getTmpDir();
-            tmp.delete();
-        }
-    };
-    
     public static void PrintException(String tag,Throwable e){
         ByteArrayOutputStream out=new ByteArrayOutputStream();
         PrintStream strm=new PrintStream(out);
@@ -183,14 +185,24 @@ public class E_Application extends Application
         Log.e(tag,err);
     }
     
-    static final Thread.UncaughtExceptionHandler H=new Thread.UncaughtExceptionHandler(){
+    private final Thread.UncaughtExceptionHandler H=new Thread.UncaughtExceptionHandler(){
         @Override
         public void uncaughtException(Thread p1, Throwable p2){
-            printExceptionMessage(p2);
+			Intent intent=new Intent(E_ErrorActivity.ACTION_ERROR);
+			intent.putExtra(E_ErrorActivity.EXTRA_ERROR_MESSAGE,getExceptionMessage(p2));
+			intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+			startActivity(intent);
+			System.exit(0);
         }              
         
-        void printExceptionMessage(Throwable e){
-            PrintException("eide",e);
+        private String getExceptionMessage(Throwable e){
+            ByteArrayOutputStream out=new ByteArrayOutputStream();
+			PrintStream strm=new PrintStream(out);
+			e.printStackTrace(strm);
+			String err=out.toString();
+			strm.close();
+			out.reset();
+			return err;
         }
     } ;
 }

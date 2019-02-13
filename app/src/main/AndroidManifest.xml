@@ -33,6 +33,7 @@
             android:launchMode="singleTask"
             android:configChanges="keyboard|keyboardHidden|orientation"
             android:windowSoftInputMode="adjustResize|stateAlwaysVisible"
+			android:process=":term"
             android:label="终端" >
             <intent-filter>
                 <action android:name="eide.intent.action.TERM_EXEC" />   
@@ -41,7 +42,17 @@
             </intent-filter>         
         </activity>
         <service
+			android:process=":term"
             android:name="aenu.eide.E_TermService"/>
+		<activity
+			android:process=":error"
+            android:name="aenu.eide.E_ErrorActivity"
+            android:launchMode="singleTask">
+			<intent-filter>
+                <action android:name="eide.intent.action.ERROR" />     
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>         
+        </activity>
         
     </application>
 

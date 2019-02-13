@@ -24,7 +24,6 @@ import aenu.gradle.G_SyntaxException;
 import android.util.Log;
 import java.util.Set;
 import aenu.gradle.expr.Array;
-//import aenu.eide.gradle_impl.plugin.__default;
 import java.util.Collection;
 import aenu.eide.gradle_impl.plugin.eide_java_application;
 import aenu.eide.gradle_impl.plugin.eide_c_application;
@@ -45,9 +44,8 @@ public final class GradleProject{
     public final Context context;
     
     private final Map<String,IPlugin> plugins=new HashMap<>();
-    private List<IDependencie> dependencies=new ArrayList<>();
     
-    GradleProject(Context context,File build_gradle) throws IOException{
+    private GradleProject(Context context,File build_gradle) throws IOException{
         this.context=context;
         this.build_gradle=build_gradle;
         this.tool_chain=new ToolChain(context);
@@ -81,10 +79,7 @@ public final class GradleProject{
         
         for(IPlugin p:plugins.values())
             p.plugin_Visit(tree);
-        /*if((node=tree.getNode("dependencies.compile"))!=null)
-            if(node.values().size()!=0)
-                load_dependencies(node.values());*/
-    }
+	}
     
     private void load_plugins(List<StringLiteral> names){
         for(StringLiteral name:names){
@@ -168,9 +163,6 @@ public final class GradleProject{
     {
         analyze_gradle();
         
-        //if(plugins.size()==0)
-        //    plugins.put("",new __default());
-            
         Collection<IPlugin> plugins=this.plugins.values();
         
         for(IPlugin l:plugins){

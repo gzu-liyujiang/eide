@@ -2,27 +2,22 @@
 
 //license wtfpl 2.0
 
-//by aenu 2019
+//by aenu 2018,2019
 //   email:202983447@qq.com
 
 package aenu.eide.gradle_impl.plugin;
-import aenu.eide.gradle_impl.IPlugin;
-import aenu.gradle.G_Tree;
-import java.io.File;
-import aenu.gradle.G_Tree.Node;
-import aenu.gradle.expr.StringLiteral;
-import java.util.List;
-import aenu.eide.gradle_impl.ToolChain;
+import aenu.eide.E_Application;
 import aenu.eide.gradle_impl.GradleProject;
+import aenu.eide.gradle_impl.IPlugin;
+import aenu.eide.gradle_impl.ToolChain;
+import aenu.gradle.G_Tree;
+import aenu.gradle.expr.StringLiteral;
+import java.io.File;
 import java.io.IOException;
-import java.util.zip.ZipOutputStream;
-import java.io.ByteArrayOutputStream;
-import java.util.zip.ZipFile;
-import aenu.eide.util.IOUtils;
-import android.content.Intent;
-import android.net.Uri;
+import java.util.List;
+import aenu.eide.gradle_impl.ToolChainHelper;
 
-public final class com_android_library implements IPlugin{
+public class com_android_library implements IPlugin{
 
     private int compileSdkVersion=21;
     private String buildToolsVersion="21.1.0";
@@ -46,6 +41,11 @@ public final class com_android_library implements IPlugin{
     private float compileOptions_targetCompatibility=1.7f;
     private float compileOptions_sourceCompatibility=1.7f;
 
+	private GradleProject g_project;
+
+    public com_android_library(GradleProject g_project){
+        this.g_project=g_project;
+    }
     public int compileSdkVersion(){
         return compileSdkVersion;
     }
@@ -165,38 +165,50 @@ public final class com_android_library implements IPlugin{
 
                 try{
                     ToolChain tc=gp.tool_chain;
-                    File build_gradle=gp.build_gradle;
+                    final File p_dir=gp.getProjectDir();
 
                     {//run aapt
-                        File r_dir=new File(build_gradle.getParentFile(),"build/gen");
-                        File resDir=new File(build_gradle.getParentFile(),"src/main/res");
-                        File android_jar=new File("/sdcard/.aide/android.jar");//FIXME
-                        File AndroidManifest_xml=new File(build_gradle.getParentFile(),"src/main/AndroidManifest.xml");
+                        File r_dir=new File(p_dir,"build/gen");
+                        File resDir=new File(p_dir,"src/main/res");
+                        File android_jar=new File(E_Application.getAppPrivateDir(),"android.jar");
+                        File AndroidManifest_xml=new File(p_dir,"src/main/AndroidManifest.xml");
+						
+						r_dir.mkdirs();
+						
+						final String gen_r_args=ToolChainHelper.generate_aapt_gen_r_args(r_dir,new File[]{resDir},android_jar,AndroidManifest_xml,null);
                         if(resDir.exists())
-                            if(!tc.run_aapt_gen_r(r_dir,resDir,android_jar,AndroidManifest_xml))
+                            if(!tc.run_aapt(gen_r_args))
                                 throw new IOException("AAPT!!!!!");
 
-                        File assetsDir=new File(build_gradle.getParentFile(),"src/main/assets");
-                        File out_file=new File(build_gradle.getParentFile(),"build/bin/resources.zip");
+                        File assetsDir=new File(p_dir,"src/main/assets");
+                        File out_file=new File(p_dir,"build/bin/resources.zip");
 
-                        if(!tc.run_aapt_pack(assetsDir,resDir,android_jar,AndroidManifest_xml,out_file))
+						out_file.getParentFile().mkdirs();
+						
+						final String pkg_args=ToolChainHelper.generate_aapt_pkg_args(new File[]{resDir},new File[]{assetsDir},android_jar,AndroidManifest_xml,null,out_file);
+						
+						
+                        if(!tc.run_aapt(pkg_args))
                             throw new IOException("kk AAPT!!...");
                     }
 
                     {//run ecj
 
-                        File android_jar=new File("/sdcard/.aide/android.jar");//FIXME
-                        File class_out_dir=new File(build_gradle.getParentFile(),"build/bin/class");
-                        File src_dir=new File(build_gradle.getParentFile(),"src/main/java");
-                        File r_dir=new File(build_gradle.getParentFile(),"build/gen");
+                        File android_jar=new File(E_Application.getAppPrivateDir(),"android.jar");
+                        File class_out_dir=new File(p_dir,"build/bin/class");
+                        File src_dir=new File(p_dir,"src/main/java");
+                        File r_dir=new File(p_dir,"build/gen");
 
-                        boolean r;
-
+						class_out_dir.mkdirs();
+                        
+						String args;
+						
                         if(r_dir.exists())
-                            r=tc.run_ecj(android_jar,class_out_dir,src_dir,r_dir);
+							args=ToolChainHelper.generate_ecj_args(android_jar,class_out_dir,src_dir,r_dir);
                         else
-                            r=tc.run_ecj(android_jar,class_out_dir,src_dir);
-                        if(!r)
+						    args=ToolChainHelper.generate_ecj_args(android_jar,class_out_dir,src_dir);
+						
+                        if(!tc.run_ecj(args))
                             throw new IOException("ECJ!!!!");
                     }
 
@@ -218,7 +230,7 @@ public final class com_android_library implements IPlugin{
     }
 
     private File handle_android_externalNativeBuild_ndkBuild_path(G_Tree.Node node){
-        return null;
+        return new File(g_project.getProjectDir(),(String)node.values().get(0).value());
     }
 
     private File[] handle_android_buildTypes_release_proguardFiles(G_Tree.Node node){

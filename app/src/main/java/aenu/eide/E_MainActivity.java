@@ -433,6 +433,9 @@ public class E_MainActivity extends AppCompatActivity implements RequestListener
 					}
                 }catch(IOException e){
                 }
+				finally{
+					drawer.closeDrawer(Gravity.LEFT);
+				}
             }break;
             }
         

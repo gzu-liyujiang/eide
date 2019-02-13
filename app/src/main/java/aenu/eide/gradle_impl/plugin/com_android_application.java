@@ -6,162 +6,24 @@
 //   email:202983447@qq.com
 
 package aenu.eide.gradle_impl.plugin;
-import aenu.eide.gradle_impl.IPlugin;
-import aenu.gradle.G_Tree;
-import java.io.File;
-import aenu.gradle.G_Tree.Node;
-import aenu.gradle.expr.StringLiteral;
-import java.util.List;
-import aenu.eide.gradle_impl.ToolChain;
+import aenu.eide.E_Application;
 import aenu.eide.gradle_impl.GradleProject;
-import java.io.IOException;
-import java.util.zip.ZipOutputStream;
-import java.io.ByteArrayOutputStream;
-import java.util.zip.ZipFile;
+import aenu.eide.gradle_impl.ToolChain;
 import aenu.eide.util.IOUtils;
 import android.content.Intent;
 import android.net.Uri;
-import aenu.eide.E_Application;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipOutputStream;
+import aenu.eide.gradle_impl.ToolChainHelper;
+import java.io.FileFilter;
 
-public final class com_android_application implements IPlugin{
-    
-    private int compileSdkVersion=21;
-    private String buildToolsVersion="21.1.0";
-    private String defaultConfig_applicationId=null;
-    private int defaultConfig_minSdkVersion=14;
-    private int defaultConfig_targetSdkVersion=21;
-    private int defaultConfig_versionCode=1;
-    private String defaultConfig_versionName="1.0";
-    private boolean buildTypes_debug_minifyEnabled=false;
-    private boolean buildTypes_debug_shrinkResources=false;
-    private File[] buildTypes_debug_proguardFiles=null;
-    private boolean buildTypes_release_minifyEnabled=false;
-    private boolean buildTypes_release_shrinkResources=false;
-    private File[] buildTypes_release_proguardFiles=null;
-    private File externalNativeBuild_ndkBuild_path=null;
-    private String ndk_moduleName=null;
-    private String[] ndk_cppFlags=null;
-    private String[] ndk_ldLibs=null;
-    private String[] ndk_abiFilters=null;
-    private String ndk_stl="c++_static";
-    private float compileOptions_targetCompatibility=1.7f;
-    private float compileOptions_sourceCompatibility=1.7f;
-    
-    private GradleProject g_project;
+public class com_android_application extends com_android_library{
     
     public com_android_application(GradleProject g_project){
-        this.g_project=g_project;
-    }
-    
-    public int compileSdkVersion(){
-        return compileSdkVersion;
-    }
-    public String buildToolsVersion(){
-        return buildToolsVersion;
-    }
-    public String defaultConfig_applicationId(){
-        return defaultConfig_applicationId;
-    }
-    public int defaultConfig_minSdkVersion(){
-        return defaultConfig_minSdkVersion;
-    }
-    public int defaultConfig_targetSdkVersion(){
-        return defaultConfig_targetSdkVersion;
-    }
-    public int defaultConfig_versionCode(){
-        return defaultConfig_versionCode;
-    }
-    public String defaultConfig_versionName(){
-        return defaultConfig_versionName;
-    }
-    public boolean buildTypes_debug_minifyEnabled(){
-        return buildTypes_debug_minifyEnabled;
-    }
-    public boolean buildTypes_debug_shrinkResources(){
-        return buildTypes_debug_shrinkResources;
-    }
-    public File[] buildTypes_debug_proguardFiles(){
-        return buildTypes_debug_proguardFiles;
-    }
-    public boolean buildTypes_release_minifyEnabled(){
-        return buildTypes_release_minifyEnabled;
-    }
-    public boolean buildTypes_release_shrinkResources(){
-        return buildTypes_release_shrinkResources;
-    }
-    public File[] buildTypes_release_proguardFiles(){
-        return buildTypes_release_proguardFiles;
-    }
-    public File externalNativeBuild_ndkBuild_path(){
-        return externalNativeBuild_ndkBuild_path;
-    }
-    public String ndk_moduleName(){
-        return ndk_moduleName;
-    }
-    public String[] ndk_cppFlags(){
-        return ndk_cppFlags;
-    }
-    public String[] ndk_ldLibs(){
-        return ndk_ldLibs;
-    }
-    public String[] ndk_abiFilters(){
-        return ndk_abiFilters;
-    }
-    public String ndk_stl(){
-        return ndk_stl;
-    }
-    public float compileOptions_targetCompatibility(){
-        return compileOptions_targetCompatibility;
-    }
-    public float compileOptions_sourceCompatibility(){
-        return compileOptions_sourceCompatibility;
-    }
-    @Override
-    public void plugin_Visit(G_Tree tree){
-        G_Tree.Node node;
-
-        if((node=tree.getNode("android.compileSdkVersion"))!=null) 
-            compileSdkVersion=(int)node.values().get(0).value();
-        if((node=tree.getNode("android.buildToolsVersion"))!=null) 
-            buildToolsVersion=(String)node.values().get(0).value();
-        if((node=tree.getNode("android.defaultConfig.applicationId"))!=null) 
-            defaultConfig_applicationId=(String)node.values().get(0).value();
-        if((node=tree.getNode("android.defaultConfig.minSdkVersion"))!=null) 
-            defaultConfig_minSdkVersion=(int)node.values().get(0).value();
-        if((node=tree.getNode("android.defaultConfig.targetSdkVersion"))!=null) 
-            defaultConfig_targetSdkVersion=(int)node.values().get(0).value();
-        if((node=tree.getNode("android.defaultConfig.versionCode"))!=null) 
-            defaultConfig_versionCode=(int)node.values().get(0).value();
-        if((node=tree.getNode("android.defaultConfig.versionName"))!=null) 
-            defaultConfig_versionName=(String)node.values().get(0).value();
-        if((node=tree.getNode("android.buildTypes.debug.minifyEnabled"))!=null) 
-            buildTypes_debug_minifyEnabled=(boolean)node.values().get(0).value();
-        if((node=tree.getNode("android.buildTypes.debug.shrinkResources"))!=null) 
-            buildTypes_debug_shrinkResources=(boolean)node.values().get(0).value();
-        if((node=tree.getNode("android.buildTypes.debug.proguardFiles"))!=null) 
-            buildTypes_debug_proguardFiles= handle_android_buildTypes_debug_proguardFiles(node);
-        if((node=tree.getNode("android.buildTypes.release.minifyEnabled"))!=null) 
-            buildTypes_release_minifyEnabled=(boolean)node.values().get(0).value();
-        if((node=tree.getNode("android.buildTypes.release.shrinkResources"))!=null) 
-            buildTypes_release_shrinkResources=(boolean)node.values().get(0).value();
-        if((node=tree.getNode("android.buildTypes.release.proguardFiles"))!=null) 
-            buildTypes_release_proguardFiles= handle_android_buildTypes_release_proguardFiles(node);
-        if((node=tree.getNode("android.externalNativeBuild.ndkBuild.path"))!=null) 
-            externalNativeBuild_ndkBuild_path= handle_android_externalNativeBuild_ndkBuild_path(node);
-        if((node=tree.getNode("android.ndk.moduleName"))!=null) 
-            ndk_moduleName=(String)node.values().get(0).value();
-        if((node=tree.getNode("android.ndk.cppFlags"))!=null) 
-            ndk_cppFlags=getStrings((List<StringLiteral>)node.values());
-        if((node=tree.getNode("android.ndk.ldLibs"))!=null) 
-            ndk_ldLibs=getStrings((List<StringLiteral>)node.values());
-        if((node=tree.getNode("android.ndk.abiFilters"))!=null) 
-            ndk_abiFilters=getStrings((List<StringLiteral>)node.values());
-        if((node=tree.getNode("android.ndk.stl"))!=null) 
-            ndk_stl=(String)node.values().get(0).value();
-        if((node=tree.getNode("android.compileOptions.targetCompatibility"))!=null) 
-            compileOptions_targetCompatibility=(float)node.values().get(0).value();
-        if((node=tree.getNode("android.compileOptions.sourceCompatibility"))!=null) 
-            compileOptions_sourceCompatibility=(float)node.values().get(0).value();
+        super(g_project);
     }
     
     @Override
@@ -172,65 +34,102 @@ public final class com_android_application implements IPlugin{
 
                 try{
                     ToolChain tc=gp.tool_chain;
-                    File build_gradle=gp.build_gradle;
-
+					final File p_dir=gp.getProjectDir();
+					
                     {//run aapt
-                        File r_dir=new File(build_gradle.getParentFile(),"build/gen");
-                        File resDir=new File(build_gradle.getParentFile(),"src/main/res");
+                        File r_dir=new File(p_dir,"build/gen");
+                        File resDir=new File(p_dir,"src/main/res");
                         File android_jar=new File(E_Application.getAppPrivateDir(),"android.jar");
-                        File AndroidManifest_xml=new File(build_gradle.getParentFile(),"src/main/AndroidManifest.xml");
+                        File AndroidManifest_xml=new File(p_dir,"src/main/AndroidManifest.xml");
+						
+						r_dir.mkdirs();
+						
+						final String gen_r_args=ToolChainHelper.generate_aapt_gen_r_args(r_dir,new File[]{resDir},android_jar,AndroidManifest_xml,null);
                         if(resDir.exists())
-                            if(!tc.run_aapt_gen_r(r_dir,resDir,android_jar,AndroidManifest_xml))
+                            if(!tc.run_aapt(gen_r_args))
                                 throw new IOException("AAPT!!!!!");
 
-                        File assetsDir=new File(build_gradle.getParentFile(),"src/main/assets");
-                        File out_file=new File(build_gradle.getParentFile(),"build/bin/resources.zip");
+                        File assetsDir=new File(p_dir,"src/main/assets");
+                        File out_file=new File(p_dir,"build/bin/resources.zip");
 
-                        if(!tc.run_aapt_pack(assetsDir,resDir,android_jar,AndroidManifest_xml,out_file))
+						out_file.getParentFile().mkdirs();
+						
+						final String pkg_args=ToolChainHelper.generate_aapt_pkg_args(new File[]{resDir},new File[]{assetsDir},android_jar,AndroidManifest_xml,null,out_file);
+
+                        if(!tc.run_aapt(pkg_args))
                             throw new IOException("kk AAPT!!...");
-                    }
+					}
 
                     {//run ecj
 
                         File android_jar=new File(E_Application.getAppPrivateDir(),"android.jar");
-                        File class_out_dir=new File(build_gradle.getParentFile(),"build/bin/class");
-                        File src_dir=new File(build_gradle.getParentFile(),"src/main/java");
-                        File r_dir=new File(build_gradle.getParentFile(),"build/gen");
+                        File class_out_dir=new File(p_dir,"build/bin/class");
+                        File src_dir=new File(p_dir,"src/main/java");
+                        File r_dir=new File(p_dir,"build/gen");
 
-                        boolean r;
+						class_out_dir.mkdirs();
+						//r_dir.mkdirs();
+
+						String args;
 
                         if(r_dir.exists())
-                            r=tc.run_ecj(android_jar,class_out_dir,src_dir,r_dir);
+							args=ToolChainHelper.generate_ecj_args(android_jar,class_out_dir,src_dir,r_dir);
                         else
-                            r=tc.run_ecj(android_jar,class_out_dir,src_dir);
-                        if(!r)
+						    args=ToolChainHelper.generate_ecj_args(android_jar,class_out_dir,src_dir);
+
+                        if(!tc.run_ecj(args))
                             throw new IOException("ECJ!!!!");
                     }
 
                     {//run dx
-                        File classes_dir=new File(build_gradle.getParentFile(),"build/bin/class");
-                        File jar_dir=new File(build_gradle.getParentFile(),"libs");
-                        File jar_dex_dir=new File(build_gradle.getParentFile(),"build/bin/jar_dex");
-                        File classes_dex=new File(build_gradle.getParentFile(),"build/bin/classes.dex");
+                        File classes_dir=new File(p_dir,"build/bin/class");
+                        File jars_dir=new File(p_dir,"libs");
+                        File jars_dex_dir=new File(p_dir,"build/bin/jar_dex");
+                        File classes_dex=new File(p_dir,"build/bin/classes.dex");
 
-                        if(jar_dir.exists())
-                            if(!tc.run_dx_jars(jar_dir,jar_dex_dir))
-                                throw new IOException("dx jars!!!!");
-                        if(!tc.run_dx_classes(classes_dir,classes_dex))
+						jars_dex_dir.mkdirs();
+						classes_dex.getParentFile().mkdirs();
+						
+						File[] jars=null;
+						
+						if(jars_dir!=null)
+							jars = jars_dir.listFiles(new FileFilter(){
+									@Override
+									public boolean accept(File p1){
+										if(p1.isDirectory()) return false;
+										return p1.getName().endsWith(".jar");
+									}
+								});
+								
+						if(jars!=null&&jars.length!=0){
+							for(File jar:jars){
+								final File out_dex=new File(jars_dex_dir,jar.getName().replace(".jar",".dex"));			
+								final String dx_jar_args=ToolChainHelper.generate_dx_jar_args(jar,out_dex);
+								
+								if(!tc.run_dx(dx_jar_args))
+									throw new IOException("dx jars!!!!");							
+							}
+						}
+						
+						final String dx_classes_args=ToolChainHelper.generate_dx_classes_args(classes_dir,classes_dex);
+						
+						if(!tc.run_dx(dx_classes_args))
                             throw new IOException("dx classes!!!!");
                     }
                     
                     {//build native lib
-                        if(externalNativeBuild_ndkBuild_path!=null){
+                        if(externalNativeBuild_ndkBuild_path()!=null){
                             File ndk_build =new File(E_Application.getNdkDir(),"ndk-build");
-                            File pDir=externalNativeBuild_ndkBuild_path.getParentFile().getParentFile();
+                            File pDir=externalNativeBuild_ndkBuild_path().getParentFile().getParentFile();
 
                             ProcessBuilder pBuilder=new ProcessBuilder();
                             pBuilder.environment().put("PATH",E_Application.getBinDir().getAbsolutePath());
                             pBuilder.environment().put("TEMPDIR",E_Application.getTmpDir().getAbsolutePath());//clang编译需要
  
-                            pBuilder.command(ndk_build.getAbsolutePath(),"-C",pDir.getAbsolutePath())
-                                    .start().waitFor();
+                            Process proc= pBuilder.command(ndk_build.getAbsolutePath(),"-C",pDir.getAbsolutePath())
+                                    .start();
+							if(proc.waitFor()!=0)
+								throw new RuntimeException(IOUtils.stream_read(proc.getErrorStream()));
                         }
                     }
 
@@ -238,11 +137,11 @@ public final class com_android_application implements IPlugin{
                         ByteArrayOutputStream apk_buf=new ByteArrayOutputStream();
                         ZipOutputStream apk_strm=new ZipOutputStream(apk_buf);    
 
-                        File assetsDir=new File(build_gradle.getParentFile(),"src/main/assets");
-                        ZipFile aapt_resources=new ZipFile(new File(build_gradle.getParentFile(),"build/bin/resources.zip"));
-                        File classes_dex=new File(build_gradle.getParentFile(),"build/bin/classes.dex");
-                        File output_apk=new File(build_gradle.getParentFile(),"build/bin/o.apk");
-                        File libs_dir=new File(build_gradle.getParentFile(),"src/main/libs");
+                        File assetsDir=new File(p_dir,"src/main/assets");
+                        ZipFile aapt_resources=new ZipFile(new File(p_dir,"build/bin/resources.zip"));
+                        File classes_dex=new File(p_dir,"build/bin/classes.dex");
+                        File output_apk=new File(p_dir,"build/bin/o.apk");
+                        File libs_dir=new File(p_dir,"src/main/libs");
                         
                         if(assetsDir.exists()){
                             IOUtils.zip_compressD(assetsDir,apk_strm,"assets");
@@ -262,18 +161,21 @@ public final class com_android_application implements IPlugin{
                     }
 
                     {//sign apk
-                        File input_apk=new File(build_gradle.getParentFile(),"build/bin/o.apk");
-                        File output_apk=new File(build_gradle.getParentFile(),"build/bin/o_sign.apk");
+                        File input_apk=new File(p_dir,"build/bin/o.apk");
+                        File output_apk=new File(p_dir,"build/bin/o_sign.apk");
                         File ks=new File(E_Application.getAppPrivateDir(),"test.ks");//FIXME
                         String pass="android";//FIXME
-                        if(!tc.run_apksigner(input_apk,output_apk,ks,pass))
+						
+						final String args=ToolChainHelper.generate_apksigner_args(input_apk,output_apk,ks,pass);
+						
+                        if(!tc.run_apksigner(args))
                             throw new IOException("签名失败!!!!");        
                     }
 
                     {//install apk
 
                         Intent intent = new Intent(Intent.ACTION_VIEW);
-                        File apk=new File(build_gradle.getParentFile(),"build/bin/o_sign.apk");
+                        File apk=new File(p_dir,"build/bin/o_sign.apk");
                         intent.setDataAndType(Uri.fromFile(apk),"application/vnd.android.package-archive");       
                         gp.context.startActivity(intent);
                     }
@@ -283,27 +185,5 @@ public final class com_android_application implements IPlugin{
                 }
             }
         };
-    }
-    
-    private String[] getStrings(List<StringLiteral> list){
-        int count=list.size();
-        if(count==0) return null;
-        
-        String[] r=new String[count];
-        for(int i=0;i<count;i++)
-            r[i]=list.get(i).value();
-        return r;
-    }
-
-    private File handle_android_externalNativeBuild_ndkBuild_path(G_Tree.Node node){
-        return new File(g_project.getProjectDir(),(String)node.values().get(0).value());
-    }
-
-    private File[] handle_android_buildTypes_release_proguardFiles(G_Tree.Node node){
-        return null;
-    }
-
-    private File[] handle_android_buildTypes_debug_proguardFiles(G_Tree.Node node){
-        return null;
     }
 }
