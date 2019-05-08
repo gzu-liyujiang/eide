@@ -44,7 +44,7 @@ import android.os.Looper;
  */
 class E_TermSession extends TermSession {
     
-    public static final enum TermType{
+    public enum TermType{
         DEFAULT,
         JAVA
     };

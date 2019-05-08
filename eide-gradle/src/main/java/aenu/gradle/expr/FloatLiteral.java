@@ -1,14 +1,13 @@
 package aenu.gradle.expr;
 
-public class FloatLiteral extends Expression{
+public class FloatLiteral extends Expression<Double> {
 
-
-    public FloatLiteral(String code){
+    public FloatLiteral(String code) {
         super(code);
     }
 
     @Override
-    public Double value(){
-        return new Double(super.code);
+    public Double value() {
+        return Double.parseDouble(super.code);
     }
 }

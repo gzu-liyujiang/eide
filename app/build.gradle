@@ -1,15 +1,19 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 21
-    buildToolsVersion "21.1.0"
+    compileSdkVersion 28
+    buildToolsVersion "28.0.3"
 
     defaultConfig {
         applicationId "aenu.eide"
         minSdkVersion 16
-        targetSdkVersion 21
+        targetSdkVersion 28
         versionCode 2
         versionName "0.2"
+
+        ndk {
+            abiFilters "armeabi-v7a"
+        }
     }
     buildTypes {
         release {
@@ -17,15 +21,27 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    externalNativeBuild {
+        ndkBuild {
+            path file('src/main/jni/Android.mk')
+        }
+    }
+//    externalNativeBuild {
+//        cmake {
+//            path "CMakeLists.txt"
+//        }
+//    }
+
 }
 
 dependencies {
-	compile 'com.android.support:support-v4:25.0.0'
-    compile 'com.android.support:appcompat-v7:25.0.0'
-    compile project(':textwarrior')
-    compile project(':eclipse')
-    compile project(':AndroidTreeView')
-    compile project(':emulatorview')
-    compile project(':libtermexec')
-    compile project(':eide-gradle')
+	implementation 'com.android.support:support-v4:28.0.0'
+    implementation 'com.android.support:appcompat-v7:28.0.0'
+    implementation project(':textwarrior')
+    implementation project(':eclipse')
+    implementation project(':AndroidTreeView')
+    implementation project(':emulatorview')
+    implementation project(':libtermexec')
+    implementation project(':eide-gradle')
 }

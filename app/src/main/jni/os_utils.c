@@ -2,6 +2,7 @@
 #include <jni.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <stdlib.h>
 
 JNIEXPORT jint JNICALL Java_aenu_eide_util_OSUtils_fork(JNIEnv *env, jclass clazz) {
     return fork();

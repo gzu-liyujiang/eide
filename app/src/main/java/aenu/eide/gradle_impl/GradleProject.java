@@ -5,91 +5,106 @@
 //   email:202983447@qq.com
 
 package aenu.eide.gradle_impl;
+
 import aenu.gradle.G_Parser;
 import aenu.gradle.G_Tree;
+
 import java.io.File;
+
 import aenu.eide.util.IOUtils;
+
 import android.content.Context;
+
 import aenu.gradle.G_ParseException;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
+
 import aenu.gradle.expr.StringLiteral;
 import aenu.gradle.expr.Expression;
 import aenu.eide.gradle_impl.plugin.com_android_application;
+
 import java.util.ArrayList;
+
 import aenu.gradle.expr.FunctionInvoke;
+
 import java.io.IOException;
+
 import aenu.gradle.G_SyntaxException;
+
 import android.util.Log;
+
 import java.util.Set;
+
 import aenu.gradle.expr.Array;
+
 import java.util.Collection;
+
 import aenu.eide.gradle_impl.plugin.eide_java_application;
 import aenu.eide.gradle_impl.plugin.eide_c_application;
 
-public final class GradleProject{
+public final class GradleProject {
 
-    public static final GradleProject open(Context context,File build_gradle){
-        try{
-            return new GradleProject(context,build_gradle);
-        }
-        catch(Exception e){
+    public static final GradleProject open(Context context, File build_gradle) {
+        try {
+            return new GradleProject(context, build_gradle);
+        } catch (Exception e) {
             return null;
         }
     }
-    
+
     public final File build_gradle;
     public final ToolChain tool_chain;
     public final Context context;
-    
-    private final Map<String,IPlugin> plugins=new HashMap<>();
-    
-    private GradleProject(Context context,File build_gradle) throws IOException{
-        this.context=context;
-        this.build_gradle=build_gradle;
-        this.tool_chain=new ToolChain(context);
+
+    private final Map<String, IPlugin> plugins = new HashMap<>();
+
+    private GradleProject(Context context, File build_gradle) throws IOException {
+        this.context = context;
+        this.build_gradle = build_gradle;
+        this.tool_chain = new ToolChain(context);
     }
-    
-    public File getProjectDir(){
+
+    public File getProjectDir() {
         return build_gradle.getParentFile();
     }
-    
-    public File getJavaDir(){
-        return new File(build_gradle.getParentFile(),"src/main/java");
+
+    public File getJavaDir() {
+        return new File(build_gradle.getParentFile(), "src/main/java");
     }
-    
-    public File getJniDir(){
-        return new File(build_gradle.getParentFile(),"src/main/jni");
+
+    public File getJniDir() {
+        return new File(build_gradle.getParentFile(), "src/main/jni");
     }
-    
-    public File getCxDir(){
-        return new File(build_gradle.getParentFile(),"src/main/cpp");
+
+    public File getCxDir() {
+        return new File(build_gradle.getParentFile(), "src/main/cpp");
     }
-    
-    private void analyze_gradle() throws Exception{
-        
-        G_Tree tree=G_Parser.Parse(IOUtils.file_read2(build_gradle));
-        
+
+    private void analyze_gradle() throws Exception {
+
+        G_Tree tree = G_Parser.Parse(IOUtils.file_read2(build_gradle));
+
         G_Tree.Node node;
-        
-        if((node=tree.getNode("apply.plugin"))!=null)
-            if(node.values().size()!=0)
-                load_plugins((List<StringLiteral>)node.values());
-        
-        for(IPlugin p:plugins.values())
+
+        if ((node = tree.getNode("apply.plugin")) != null)
+            if (node.values().size() != 0)
+                load_plugins(node.values());
+
+        for (IPlugin p : plugins.values())
             p.plugin_Visit(tree);
-	}
-    
-    private void load_plugins(List<StringLiteral> names){
-        for(StringLiteral name:names){
-            if(name.value().equals("com.android.application"))
-                plugins.put(name.value(),new com_android_application(this));
-            if(name.value().equals("eide-java-application"))
-                plugins.put(name.value(),new eide_java_application());
-            if(name.value().equals("eide-c-application"))
-                plugins.put(name.value(),new eide_c_application(this));
-            
+    }
+
+    private void load_plugins(List<Expression> names) {
+        for (Expression name : names) {
+            if (name.value().equals("com.android.application"))
+                plugins.put(name.value().toString(), new com_android_application(this));
+            if (name.value().equals("eide-java-application"))
+                plugins.put(name.value().toString(), new eide_java_application());
+            if (name.value().equals("eide-c-application"))
+                plugins.put(name.value().toString(), new eide_c_application(this));
+
         }
     }
     
@@ -158,16 +173,15 @@ public final class GradleProject{
             }
         }
     }*/
-    
-    public void build(Context context) throws Exception
-    {
+
+    public void build(Context context) throws Exception {
         analyze_gradle();
-        
-        Collection<IPlugin> plugins=this.plugins.values();
-        
-        for(IPlugin l:plugins){
-         
-            Runnable task=l.plugin_Task(this);
+
+        Collection<IPlugin> plugins = this.plugins.values();
+
+        for (IPlugin l : plugins) {
+
+            Runnable task = l.plugin_Task(this);
             task.run();
         }
     }

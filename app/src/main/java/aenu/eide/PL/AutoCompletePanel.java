@@ -15,12 +15,13 @@ import android.view.ViewGroup;
 import android.view.LayoutInflater;
 import android.widget.TextView;
 import android.widget.ImageView;
-import com.myopicmobile.textwarrior.android.R;
 import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
 import android.graphics.Color;
 import android.text.Spanned;
 import android.text.style.RelativeSizeSpan;
+
+import aenu.eide.R;
 
 public abstract class AutoCompletePanel extends ListPopupWindow implements IAutoComplete{
    

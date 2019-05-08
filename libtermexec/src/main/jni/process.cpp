@@ -16,18 +16,21 @@
 
 #include "process.h"
 
+//#include <stdlib.h>
+//#include <errno.h>
+//#include <signal.h>
+//#include <string.h>
+#include <cstdlib>
+#include <cerrno>
+#include <csignal>
+#include <cstring>
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <dirent.h>
-#include <errno.h>
 #include <fcntl.h>
-#include <stdlib.h>
 #include <unistd.h>
 #include <termios.h>
-#include <signal.h>
-
-typedef unsigned short char16_t;
 
 class String8 {
 public:
@@ -41,11 +44,11 @@ public:
         }
     }
 
-    void set(const char16_t* o, size_t numChars) {
+    void set(const unsigned short *o, size_t numChars) {
         if (mString) {
             free(mString);
         }
-        mString = (char*) malloc(numChars + 1);
+        mString = (char *) malloc(numChars + 1);
         if (!mString) {
             return;
         }
@@ -55,15 +58,15 @@ public:
         mString[numChars] = '\0';
     }
 
-    const char* string() {
+    const char *string() {
         return mString;
     }
+
 private:
-    char* mString;
+    char *mString;
 };
 
-static int throwOutOfMemoryError(JNIEnv *env, const char *message)
-{
+static int throwOutOfMemoryError(JNIEnv *env, const char *message) {
     jclass exClass;
     const char *className = "java/lang/OutOfMemoryError";
 
@@ -71,10 +74,9 @@ static int throwOutOfMemoryError(JNIEnv *env, const char *message)
     return env->ThrowNew(exClass, message);
 }
 
-static int throwIOException(JNIEnv *env, int errnum, const char *message)
-{
+static int throwIOException(JNIEnv *env, int errnum, const char *message) {
     __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "%s errno %s(%d)",
-        message, strerror(errno), errno);
+                        message, strerror(errno), errno);
 
     if (errnum != 0) {
         const char *s = strerror(errnum);
@@ -94,22 +96,22 @@ static void closeNonstandardFileDescriptors() {
     // to child processes using the environment variable ANDROID_PROPERTY_WORKSPACE, which is of
     // the form "properties_fd,sizeOfSharedMemory"
     int properties_fd = -1;
-    char* properties_fd_string = getenv("ANDROID_PROPERTY_WORKSPACE");
+    char *properties_fd_string = getenv("ANDROID_PROPERTY_WORKSPACE");
     if (properties_fd_string != NULL) {
         properties_fd = atoi(properties_fd_string);
     }
     DIR *dir = opendir("/proc/self/fd");
-    if(dir != NULL) {
+    if (dir != NULL) {
         int dir_fd = dirfd(dir);
 
-        while(true) {
+        while (true) {
             struct dirent *entry = readdir(dir);
-            if(entry == NULL) {
+            if (entry == NULL) {
                 break;
             }
 
             int fd = atoi(entry->d_name);
-            if(fd > STDERR_FILENO && fd != dir_fd && fd != properties_fd) {
+            if (fd > STDERR_FILENO && fd != dir_fd && fd != properties_fd) {
                 close(fd);
             }
         }
@@ -118,8 +120,8 @@ static void closeNonstandardFileDescriptors() {
     }
 }
 
-static int create_subprocess(JNIEnv *env, const char *cmd, char *const argv[], char *const envp[], int masterFd)
-{
+static int create_subprocess(JNIEnv *env, const char *cmd, char *const argv[], char *const envp[],
+                             int masterFd) {
     // same size as Android 1.6 libc/unistd/ptsname_r.c
     char devname[64];
     pid_t pid;
@@ -127,7 +129,7 @@ static int create_subprocess(JNIEnv *env, const char *cmd, char *const argv[], c
     fcntl(masterFd, F_SETFD, FD_CLOEXEC);
 
     // grantpt is unnecessary, because we already assume devpts by using /dev/ptmx
-    if(unlockpt(masterFd)){
+    if (unlockpt(masterFd)) {
         throwIOException(env, errno, "trouble with /dev/ptmx");
         return -1;
     }
@@ -143,18 +145,18 @@ static int create_subprocess(JNIEnv *env, const char *cmd, char *const argv[], c
     }
 
     pid = fork();
-    if(pid < 0) {
+    if (pid < 0) {
         throwIOException(env, errno, "fork failed");
         return -1;
     }
 
-    if(pid == 0){
+    if (pid == 0) {
         int pts;
 
         setsid();
 
         pts = open(devname, O_RDWR);
-        if(pts < 0) exit(-1);
+        if (pts < 0) exit(-1);
 
         ioctl(pts, TIOCSCTTY, 0);
 
@@ -179,13 +181,13 @@ static int create_subprocess(JNIEnv *env, const char *cmd, char *const argv[], c
 
 extern "C" {
 
-JNIEXPORT void JNICALL Java_jackpal_androidterm_TermExec_sendSignal(JNIEnv *env, jobject clazz,
-    jint procId, jint signal)
-{
+JNIEXPORT void JNICALL Java_jackpal_androidterm_TermExec_sendSignal(JNIEnv *env, jclass clazz,
+                                                                    jint procId, jint signal) {
     kill(procId, signal);
 }
 
-JNIEXPORT jint JNICALL Java_jackpal_androidterm_TermExec_waitFor(JNIEnv *env, jclass clazz, jint procId) {
+JNIEXPORT jint JNICALL
+Java_jackpal_androidterm_TermExec_waitFor(JNIEnv *env, jclass clazz, jint procId) {
     int status;
     waitpid(procId, &status, 0);
     int result = 0;
@@ -195,10 +197,11 @@ JNIEXPORT jint JNICALL Java_jackpal_androidterm_TermExec_waitFor(JNIEnv *env, jc
     return result;
 }
 
-JNIEXPORT jint JNICALL Java_jackpal_androidterm_TermExec_createSubprocessInternal(JNIEnv *env, jclass clazz,
-    jstring cmd, jobjectArray args, jobjectArray envVars, jint masterFd)
-{
-    const jchar* str = cmd ? env->GetStringCritical(cmd, 0) : 0;
+JNIEXPORT jint JNICALL
+Java_jackpal_androidterm_TermExec_createSubprocessInternal(JNIEnv *env, jclass clazz,
+                                                           jstring cmd, jobjectArray args,
+                                                           jobjectArray envVars, jint masterFd) {
+    const jchar *str = cmd ? env->GetStringCritical(cmd, 0) : 0;
     String8 cmd_8;
     if (str) {
         cmd_8.set(str, env->GetStringLength(cmd));
@@ -209,7 +212,7 @@ JNIEXPORT jint JNICALL Java_jackpal_androidterm_TermExec_createSubprocessInterna
     char **argv = NULL;
     String8 tmp_8;
     if (size > 0) {
-        argv = (char **)malloc((size+1)*sizeof(char *));
+        argv = (char **) malloc((size + 1) * sizeof(char *));
         if (!argv) {
             throwOutOfMemoryError(env, "Couldn't allocate argv array");
             return 0;
@@ -231,7 +234,7 @@ JNIEXPORT jint JNICALL Java_jackpal_androidterm_TermExec_createSubprocessInterna
     size = envVars ? env->GetArrayLength(envVars) : 0;
     char **envp = NULL;
     if (size > 0) {
-        envp = (char **)malloc((size+1)*sizeof(char *));
+        envp = (char **) malloc((size + 1) * sizeof(char *));
         if (!envp) {
             throwOutOfMemoryError(env, "Couldn't allocate envp array");
             return 0;

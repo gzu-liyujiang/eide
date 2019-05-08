@@ -1,0 +1,9 @@
+include ':app',
+        ':textwarrior',
+        ':eclipse',
+        ':AndroidTreeView',
+        ':emulatorview',
+        ':libtermexec',
+        ':eide-gradle'
+
+

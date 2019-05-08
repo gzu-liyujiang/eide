@@ -1411,7 +1411,7 @@ clang_parseTranslationUnit(CXIndex CIdx,
 CINDEX_LINKAGE enum CXErrorCode
 clang_parseTranslationUnit2(CXIndex CIdx,
                             const char *source_filename,
-                            const char *const *command_line_args,
+                            const char *command_line_args,
                             int num_command_line_args,
                             struct CXUnsavedFile *unsaved_files,
                             unsigned num_unsaved_files,

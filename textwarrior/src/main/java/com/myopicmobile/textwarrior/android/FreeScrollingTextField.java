@@ -426,33 +426,23 @@ implements Document.TextFieldMetrics{
 
             for(int i=0;i<n;i++){
                 int attr=a.getIndex(i);
-                switch(attr){
-                    case R.styleable.FreeScrollingTextField_fstf_TextColor:
-                        cs.setColor(ColorScheme.Colorable.FOREGROUND,a.getColorStateList(attr).getDefaultColor());
-                        break;
-                    case R.styleable.FreeScrollingTextField_fstf_TextSize:
-                        setTextSize(a.getDimensionPixelSize(attr,16));
-                        break;
-                    case R.styleable.FreeScrollingTextField_fstf_TextColorSelection:
-                        cs.setColor(ColorScheme.Colorable.SELECTION_FOREGROUND,a.getColorStateList(attr).getDefaultColor());
-                        break;
-                    case R.styleable.FreeScrollingTextField_fstf_BackgroundSelection:
-                        cs.setColor(ColorScheme.Colorable.SELECTION_BACKGROUND,a.getColorStateList(attr).getDefaultColor());
-                        break;
-                    case R.styleable.FreeScrollingTextField_fstf_TextColorKeyword:
-                        cs.setColor(ColorScheme.Colorable.KEYWORD,a.getColorStateList(attr).getDefaultColor());
-                        break;
-                    case R.styleable.FreeScrollingTextField_fstf_TextColorString:
-                        cs.setColor(ColorScheme.Colorable.STRING,a.getColorStateList(attr).getDefaultColor());
-                        break;
-                    case R.styleable.FreeScrollingTextField_fstf_TextColorComment:
-                        cs.setColor(ColorScheme.Colorable.COMMENT,a.getColorStateList(attr).getDefaultColor());
-                        break;
-                    case R.styleable.FreeScrollingTextField_fstf_TextColorLineNumber:
-                        cs.setColor(ColorScheme.Colorable.NON_PRINTING_GLYPH,a.getColorStateList(attr).getDefaultColor());
-                        break;
-
-                }
+				if (attr == R.styleable.FreeScrollingTextField_fstf_TextColor) {
+					cs.setColor(Colorable.FOREGROUND, a.getColorStateList(attr).getDefaultColor());
+				} else if (attr == R.styleable.FreeScrollingTextField_fstf_TextSize) {
+					setTextSize(a.getDimensionPixelSize(attr, 16));
+				} else if (attr == R.styleable.FreeScrollingTextField_fstf_TextColorSelection) {
+					cs.setColor(Colorable.SELECTION_FOREGROUND, a.getColorStateList(attr).getDefaultColor());
+				} else if (attr == R.styleable.FreeScrollingTextField_fstf_BackgroundSelection) {
+					cs.setColor(Colorable.SELECTION_BACKGROUND, a.getColorStateList(attr).getDefaultColor());
+				} else if (attr == R.styleable.FreeScrollingTextField_fstf_TextColorKeyword) {
+					cs.setColor(Colorable.KEYWORD, a.getColorStateList(attr).getDefaultColor());
+				} else if (attr == R.styleable.FreeScrollingTextField_fstf_TextColorString) {
+					cs.setColor(Colorable.STRING, a.getColorStateList(attr).getDefaultColor());
+				} else if (attr == R.styleable.FreeScrollingTextField_fstf_TextColorComment) {
+					cs.setColor(Colorable.COMMENT, a.getColorStateList(attr).getDefaultColor());
+				} else if (attr == R.styleable.FreeScrollingTextField_fstf_TextColorLineNumber) {
+					cs.setColor(Colorable.NON_PRINTING_GLYPH, a.getColorStateList(attr).getDefaultColor());
+				}
             }
         } finally {
             a.recycle();
